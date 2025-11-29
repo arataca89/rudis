@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Rudis Language - projeto didático de uma linguagem de programação simples e funcional. Escrito em C.**  
+**Projeto didático de uma linguagem de programação simples e funcional. Escrito em C.**  
 
 ![Version](https://img.shields.io/badge/version-0.0.1-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -45,3 +45,32 @@ O **Rudis** é uma linguagem de programação interpretada escrita em C, projeta
 # Variáveis
 > a = 5; b = 10; raiz(a + b)
 3.87298
+
+## ✨ Versão 0.0.2
+
+Em deenvolvimento.
+
+## 👤 Autor
+
+**Seu Nome**
+- GitHub: [@seu-usuario](https://github.com/seu-usuario)
+- Email: seu-email@exemplo.com
+- LinkedIn: [Seu Perfil](https://linkedin.com/in/seu-perfil)
+
+## 🙏 Agradecimentos
+
+Um agradecimento especial para:
+
+- **Comunidade de desenvolvedores** que compartilham conhecimento aberto
+- **Projetos inspiradores** como Python, Lua e BASIC
+- **Calculadoras científicas** pela inspiração na abordagem prática
+- **Todos os contribuidores** que ajudam a melhorar este projeto
+
+## 📄 Licença
+
+Distribuído sob licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais informações.
+
+---
+
+arataca89@gmail.com
+
