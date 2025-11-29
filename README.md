@@ -66,5 +66,14 @@ Um agradecimento especial para:
 
 Distribuído sob licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais informações.
 
+---
+
+[Referência das funções C usadas no projeto](https://github.com/arataca89/rudis/blob/main/referencia.md)
+
+---
+
+arataca89@gmail.com
+
+
 
 
