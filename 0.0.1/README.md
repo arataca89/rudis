@@ -1,9 +1,9 @@
-Aqui está o documento de design atualizado para a versão 0.0.1, incluindo todas as funcionalidades que descobrimos e validamos:
+O problema é que o GitHub não renderizou o markdown corretamente. Vou te dar uma versão corrigida sem os caracteres especiais que podem estar causando problemas:
 
 ```markdown
-# **RELATÓRIO DE DESIGN DA LINGUAGEM RUDIS - VERSÃO 0.0.1**
+# RELATÓRIO DE DESIGN DA LINGUAGEM RUDIS - VERSÃO 0.0.1
 
-## **📋 METADADOS DO PROJETO**
+## METADADOS DO PROJETO
 - **Nome**: Rudis
 - **Versão**: 0.0.1 (Calculadora com Variáveis)
 - **Filosofia**: Simplicidade, Acessibilidade, Flexibilidade
@@ -13,10 +13,10 @@ Aqui está o documento de design atualizado para a versão 0.0.1, incluindo toda
 
 ---
 
-## **🎯 DECISÕES DE DESIGN FUNDAMENTAIS**
+## DECISÕES DE DESIGN FUNDAMENTAIS
 
-### **1. SISTEMA DE TIPOS DE DADOS**
-```python
+### 1. SISTEMA DE TIPOS DE DADOS
+```
 # APENAS UM TIPO NUMÉRICO: double
 x = 5          # 5.0 (armazenado como double)
 y = 3.14       # 3.14
@@ -26,8 +26,8 @@ w = 0b1101     # 13.0 (binário)
 
 **Justificativa**: Simplicidade máxima para usuários, cobrindo 95% dos casos de uso de uma calculadora avançada.
 
-### **2. IDENTIFICADORES DE VARIÁVEIS**
-```python
+### 2. IDENTIFICADORES DE VARIÁVEIS
+```
 # REGRA: [a-zA-Z_][a-zA-Z0-9_]*
 salario_bruto = 5000        # VÁLIDO
 _resultado = 42             # VÁLIDO
@@ -36,8 +36,8 @@ idade1 = 25                 # VÁLIDO
 nome-completo = "João"      # INVÁLIDO (caractere especial)
 ```
 
-### **3. SISTEMA DE COMENTÁRIOS MULTI-ESTILO**
-```python
+### 3. SISTEMA DE COMENTÁRIOS MULTI-ESTILO
+```
 # Comentário estilo Python (recomendado)
 valor = 5  # comentário na mesma linha
 
@@ -52,8 +52,8 @@ resultado = x + y  // cálculo simples
 media = mean(1, 2, 3)
 ```
 
-### **4. FIM DE INSTRUÇÃO FLEXÍVEL**
-```python
+### 4. FIM DE INSTRUÇÃO FLEXÍVEL
+```
 # ESTILO PYTHON (recomendado para novatos)
 x = 5
 y = 10
@@ -69,8 +69,8 @@ resultado = x + y
 
 **Tokens**: `\n` (padrão) e `;` (opcional) são tratados como fim de instrução.
 
-### **5. OPERADORES MATEMÁTICOS SUPORTADOS**
-```python
+### 5. OPERADORES MATEMÁTICOS SUPORTADOS
+```
 # ARITMÉTICOS BÁSICOS
 a + b    # Adição
 a - b    # Subtração  
@@ -83,8 +83,8 @@ a ^ b    # Potência (2 ^ 8 = 256)
 a!       # Fatorial (5! = 120) - OPERADOR PÓS-FIXO
 ```
 
-### **6. SISTEMA DE ATRIBUIÇÃO**
-```python
+### 6. SISTEMA DE ATRIBUIÇÃO
+```
 # ATRIBUIÇÃO SIMPLES
 x = 5
 
@@ -96,18 +96,18 @@ resultado = x = sqrt(25)  # resultado e x recebem 5.0
 salario_liquido = salario_bruto - (salario_bruto * 0.27)
 ```
 
-### **7. SISTEMA DE FUNÇÕES BUILT-IN (35+ FUNÇÕES)**
+### 7. SISTEMA DE FUNÇÕES BUILT-IN (35+ FUNÇÕES)
 
-#### **MATEMÁTICAS BÁSICAS**
-```python
+#### MATEMÁTICAS BÁSICAS
+```
 sqrt(25) / raiz(25)        # Raiz quadrada → 5.0
 sin(π/2) / sen(π/2)        # Seno → 1.0
 log(100)                   # Logaritmo base 10 → 2.0
 abs(-5)                    # Valor absoluto → 5.0
 ```
 
-#### **ESTATÍSTICAS (FÓRMULA AMOSTRAL)**
-```python
+#### ESTATÍSTICAS (FÓRMULA AMOSTRAL)
+```
 mean(1,2,3) / media(1,2,3)        # Média → 2.0
 median(1,3,5) / mediana(1,3,5)    # Mediana → 3.0
 std(1,2,3) / desvio(1,2,3)        # Desvio padrão → 1.0
@@ -118,16 +118,16 @@ min(5,2,8) / minimo(5,2,8)        # Mínimo → 2.0
 max(5,2,8) / maximo(5,2,8)        # Máximo → 8.0
 ```
 
-#### **FINANCEIRAS BÁSICAS**
-```python
+#### FINANCEIRAS BÁSICAS
+```
 si(1000,0.05,2) / js(1000,0.05,2)         # Juros simples → 100
 fv_si(500,0.1,3) / montante_js(500,0.1,3) # Montante juros simples → 650
 ci(1000,0.05,2) / jc(1000,0.05,2)         # Juros compostos → 102.5
 fv_ci(500,0.1,3) / montante_jc(500,0.1,3) # Montante juros compostos → 665.5
 ```
 
-#### **FINANCEIRAS AVANÇADAS**
-```python
+#### FINANCEIRAS AVANÇADAS
+```
 pv(0.05,10,100) / vp(0.05,10,100)         # Valor presente → ~772.17
 fv(0.05,10,100) / vf(0.05,10,100)         # Valor futuro → ~1257.79
 pmt(0.05,10,1000) / pagamento(0.05,10,1000) # Pagamento → ~129.50
@@ -137,15 +137,15 @@ npv(0.1,-1000,300,400,500) / vpl(0.1,-1000,300,400,500) # VPL → ~-21.04
 irr(-1000,300,400,500) / tir(-1000,300,400,500) # TIR → ~0.089
 ```
 
-### **8. CONVENÇÕES ESTATÍSTICAS VALIDADAS**
+### 8. CONVENÇÕES ESTATÍSTICAS VALIDADAS
 **Variância e Desvio Padrão**: Usam fórmula AMOSTRAL (divisor n-1)
-```python
+```
 variancia(1, 2, 3)     # Retorna 1.0 (não 0.666)
 desvio(1, 2, 3)        # Retorna 1.0 (não 0.816)
 ```
 
-### **9. SISTEMA DE NUMERAÇÃO**
-```python
+### 9. SISTEMA DE NUMERAÇÃO
+```
 # DECIMAL (padrão)
 x = 123          # 123.0
 y = 45.67        # 45.67
@@ -159,8 +159,8 @@ flags = 0b1101   # 13.0
 config = 0b1010  # 10.0
 ```
 
-### **10. INTERNACIONALIZAÇÃO (i18n)**
-```python
+### 10. INTERNACIONALIZAÇÃO (i18n)
+```
 # PORTUGUÊS (padrão)
 > a = 5
 > a + 3
@@ -176,83 +176,44 @@ config = 0b1010  # 10.0
 
 ---
 
-## **📖 GRAMÁTICA FORMAL DA LINGUAGEM RUDIS**
+## GRAMÁTICA FORMAL DA LINGUAGEM RUDIS
 
-### **GRAMÁTICA BNF (VERSÃO 0.0.1)**
-```bnf
-// ============ GRAMÁTICA RUDIS v0.0.1 ============
-
-// NÍVEL 1: PROGRAMA
+### GRAMÁTICA BNF (VERSÃO 0.0.1)
+```
 programa          := (declaracao (';' | NL))* EOF
-
-// NÍVEL 2: DECLARAÇÕES  
 declaracao        := atribuicao | expressao
-
-// NÍVEL 3: ATRIBUIÇÕES
 atribuicao        := IDENTIFICADOR '=' expressao
-
-// NÍVEL 4: EXPRESSÕES (PRECEDÊNCIA BAIXA)
 expressao         := termo (('+' | '-') termo)*
-
-// NÍVEL 5: TERMOS (PRECEDÊNCIA MÉDIA)  
 termo             := fator (('*' | '/' | '%') fator)*
-
-// NÍVEL 6: FATORES (PRECEDÊNCIA ALTA)
-fator             := potencia ('!')?           // Fatorial pós-fixo
-
-// NÍVEL 7: POTÊNCIA (PRECEDÊNCIA MUITO ALTA - direita-associativa)
+fator             := potencia ('!')?
 potencia          := atomo ('^' potencia)?
-
-// NÍVEL 8: ÁTOMOS (ELEMENTOS BÁSICOS)
-atomo             := NUMERO
-                   | IDENTIFICADOR
-                   | chamada_funcao
-                   | '(' expressao ')'
-                   | '-' atomo                 // Negativo unário
-
-// NÍVEL 9: CHAMADAS DE FUNÇÃO
+atomo             := NUMERO | IDENTIFICADOR | chamada_funcao | '(' expressao ')' | '-' atomo
 chamada_funcao    := FUNCAO '(' lista_argumentos? ')'
-
-// NÍVEL 10: LISTA DE ARGUMENTOS
 lista_argumentos  := expressao (',' expressao)*
-
-// ============ TOKENS ============
-NUMERO           := [0-9]+ ('.' [0-9]+)? | 0x[0-9A-Fa-f]+ | 0b[01]+
-IDENTIFICADOR    := [a-zA-Z_][a-zA-Z0-9_]*
-FUNCAO           := 'sqrt'|'raiz'|'sin'|'sen'|'cos'|'tan'|'log'|'ln'|'exp'|'abs'
-                   |'mean'|'media'|'median'|'mediana'|'std'|'desvio'
-                   |'variance'|'variancia'|'mode'|'moda'|'sum'|'soma'
-                   |'min'|'minimo'|'max'|'maximo'
-                   |'pv'|'vp'|'fv'|'vf'|'pmt'|'pagamento'|'nper'|'periodos'
-                   |'rate'|'taxa'|'npv'|'vpl'|'irr'|'tir'
-                   |'si'|'js'|'fv_si'|'montante_js'|'ci'|'jc'|'fv_ci'|'montante_jc'
-NL               := '\n'
-EOF              := fim_da_entrada
 ```
 
-### **🎯 TABELA DE PRECEDÊNCIA DE OPERADORES**
+### TABELA DE PRECEDÊNCIA DE OPERADORES
 
-| Precedência | Operador | Associatividade | Descrição | Exemplo |
-|-------------|----------|-----------------|-----------|---------|
-| 1 | `( )` | - | Agrupamento | `(2 + 3) * 4` |
-| 2 | `-` | Direita | Negativo unário | `-5`, `-x` |
-| 3 | `!` | Esquerda | Fatorial pós-fixo | `5!`, `(3+2)!` |
-| 4 | `^` | Direita | Potência | `2 ^ 3 ^ 2 = 512` |
-| 5 | `* / %` | Esquerda | Multiplicação/Divisão/Módulo | `10 * 2 / 5` |
-| 6 | `+ -` | Esquerda | Adição/Subtração | `3 + 5 - 2` |
-| 7 | `=` | Direita | Atribuição | `a = b = 5` |
+| Precedência | Operador | Associatividade | Descrição |
+|-------------|----------|-----------------|-----------|
+| 1 | ( ) | - | Agrupamento |
+| 2 | - | Direita | Negativo unário |
+| 3 | ! | Esquerda | Fatorial pós-fixo |
+| 4 | ^ | Direita | Potência |
+| 5 | * / % | Esquerda | Multiplicação/Divisão/Módulo |
+| 6 | + - | Esquerda | Adição/Subtração |
+| 7 | = | Direita | Atribuição |
 
-### **📚 EXEMPLOS DE EXPRESSÕES VÁLIDAS**
-
-```python
+### EXEMPLOS DE EXPRESSÕES VÁLIDAS
+```
 # Precedência complexa
-> 2 + 3 * 4 ^ 2! / 5      # 2 + (3 * (4 ^ (2!)) / 5)
+> 2 + 3 * 4 ^ 2! / 5
 
 # Atribuições encadeadas
-> a = b = c = 5 + 3 * 2   # todas recebem 11
+> a = b = c = 5 + 3 * 2
 
 # Funções com expressões
-> media = mean(1+2, 3*4, sqrt(25))  # (3, 12, 5) → média 6.666
+> media = mean(1+2, 3*4, sqrt(25))
 
 # Mix financeiro e matemático
 > resultado = pv(0.05, 10, 100) + fv_si(500, 0.02, 5) * ci(1000, 0.1, 3)
@@ -260,17 +221,17 @@ EOF              := fim_da_entrada
 
 ---
 
-## **🧪 EXEMPLOS VALIDADOS**
+## EXEMPLOS VALIDADOS
 
-### **ESTATÍSTICA**
-```python
+### ESTATÍSTICA
+```
 > media(7.5, 8.0, 6.5, 9.0)                 # 7.75
 > variancia(10.5, 12.0, 8.5, 15.0, 11.5)   # 5.625
 > desvio(25, 30, 35, 40, 45)               # ~7.9057
 ```
 
-### **FINANCEIRO**
-```python
+### FINANCEIRO
+```
 > vpl(0.05, -1000, 300, 400, 500)          # 80.4449
 > tir(-1000, 300, 400, 500)                # 0.0889634
 > vp(0.05, 10, 100)                        # ~772.17
@@ -278,9 +239,9 @@ EOF              := fim_da_entrada
 
 ---
 
-## **🔧 ESTRUTURA TÉCNICA IMPLEMENTADA**
+## ESTRUTURA TÉCNICA IMPLEMENTADA
 
-### **ARQUITETURA DO SISTEMA**
+### ARQUITETURA DO SISTEMA
 ```
 rudis/
 ├── main.c          # Ponto de entrada e REPL
@@ -295,7 +256,7 @@ rudis/
 └── Makefile        # Build para Linux
 ```
 
-### **COMPONENTES PRINCIPAIS**
+### COMPONENTES PRINCIPAIS
 - **REPL Interativo**: Histórico, ajuda integrada, internacionalização
 - **Sistema de Variáveis**: Armazenamento e recuperação
 - **Sistema de Ajuda**: Documentação paginada, ajuda por função
@@ -303,9 +264,9 @@ rudis/
 
 ---
 
-## **🚀 ROADMAP - ESTADO ATUAL**
+## ROADMAP - ESTADO ATUAL
 
-### **✅ VERSÃO 0.0.1 - CONCLUÍDA**
+### VERSÃO 0.0.1 - CONCLUÍDA
 - [x] REPL interativo com histórico
 - [x] 35+ funções built-in + aliases em português
 - [x] Sistema de variáveis com atribuição encadeada
@@ -316,15 +277,15 @@ rudis/
 - [x] Precedência de operadores correta
 - [x] Validação extensiva de todas as funcionalidades
 
-### **🔲 VERSÃO 0.0.2 - EM DESENVOLVIMENTO**
-- [ ] Múltiplas instruções por linha (`;`)
-- [ ] Comando `print` com formatação avançada:
-  - [ ] Cores ANSI (`RED:texto`)
-  - [ ] Alinhamento (`left`, `center`, `right`)
-  - [ ] Largura de campo (`20:valor`)
-  - [ ] Separadores (`,` = tabulação, `;` = concatenação)
+### VERSÃO 0.0.2 - EM DESENVOLVIMENTO
+- [ ] Múltiplas instruções por linha (;)
+- [ ] Comando print com formatação avançada:
+  - [ ] Cores ANSI (RED:texto)
+  - [ ] Alinhamento (left, center, right)
+  - [ ] Largura de campo (20:valor)
+  - [ ] Separadores (, = tabulação, ; = concatenação)
 
-### **🔲 VERSÕES FUTURAS**
+### VERSÕES FUTURAS
 - [ ] Estruturas de controle (if/else, loops)
 - [ ] Funções definidas pelo usuário
 - [ ] Arrays e estruturas de dados
@@ -332,27 +293,27 @@ rudis/
 
 ---
 
-## **🎯 PRINCÍPIOS DE DESIGN**
+## PRINCÍPIOS DE DESIGN
 
-### **SIMPLICIDADE ACIMA DE TUDO**
-- Um único tipo numérico (`double`)
+### SIMPLICIDADE ACIMA DE TUDO
+- Um único tipo numérico (double)
 - Sintaxe intuitiva e natural
 - Mensagens de erro claras
 - Operador fatorial pós-fixo (diferencial amigável)
 
-### **FLEXIBILIDADE CONSCIENTE**
+### FLEXIBILIDADE CONSCIENTE
 - Múltiplos estilos de comentário
 - Fim de instrução flexível
 - Suporte a diferentes bases numéricas
 - Precedência matemática correta
 
-### **ACESSIBILIDADE**
+### ACESSIBILIDADE
 - Internacionalização desde o início
 - Documentação completa
 - Curva de aprendizado suave
 - Funções em inglês com aliases em português
 
-### **EVOLUÇÃO ORGÂNICA**
+### EVOLUÇÃO ORGÂNICA
 - Base sólida para funcionalidades futuras
 - Arquitetura modular e extensível
 - Decisões reversíveis quando possível
@@ -362,11 +323,11 @@ rudis/
 
 **Documento criado em**: 27 de Novembro de 2025  
 **Última atualização**: Funcionalidades validadas e roadmap v0.0.2  
-**Estado atual**: **VERSÃO 0.0.1 FUNCIONAL** - Calculadora avançada com REPL
+**Estado atual**: VERSÃO 0.0.1 FUNCIONAL - Calculadora avançada com REPL
 
 ---
 
-O Rudis evoluiu de um projeto educacional para uma calculadora avançada funcional, com base sólida para se tornar uma linguagem de programação completa! 🚀
+O Rudis evoluiu de um projeto educacional para uma calculadora avançada funcional, com base sólida para se tornar uma linguagem de programação completa!
 ```
 
-Este documento agora reflete com precisão o estado **real** do projeto, incluindo todas as funcionalidades que validamos e o plano para a v0.0.2!
+Agora substitua o conteúdo do arquivo no GitHub por este. Deve renderizar corretamente!
