@@ -48,14 +48,11 @@ O **Rudis** é uma linguagem de programação interpretada escrita em C, projeta
 ```
 ## ✨ Versão 0.0.2
 
-Em deenvolvimento.
+Em desenvolvimento.
 
 ## 👤 Autor
 
-**Seu Nome**
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- Email: seu-email@exemplo.com
-- LinkedIn: [Seu Perfil](https://linkedin.com/in/seu-perfil)
+arataca89@gmail.com
 
 ## 🙏 Agradecimentos
 
@@ -70,7 +67,5 @@ Um agradecimento especial para:
 
 Distribuído sob licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais informações.
 
----
 
-arataca89@gmail.com
 
