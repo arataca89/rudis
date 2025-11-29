@@ -305,12 +305,7 @@ rudis/
 ---
 
 **Documento criado em**: 29 de Novembro de 2025  
-**Última atualização**: Funcionalidades validadas e roadmap v0.0.2  
-**Estado atual**: VERSÃO 0.0.1 FUNCIONAL - Calculadora avançada com REPL
+**Estado atual**: Versão 0.0.1 funcional - Calculadora avançada com REPL
 
 ---
-
-O Rudis evoluiu de um projeto educacional para uma calculadora avançada funcional, com base sólida para se tornar uma linguagem de programação completa!
-```
-
-Agora substitua o conteúdo do arquivo no GitHub por este. Deve renderizar corretamente!
+arataca89@gmail.com
