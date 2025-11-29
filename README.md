@@ -45,7 +45,7 @@ O **Rudis** é uma linguagem de programação interpretada escrita em C, projeta
 # Variáveis
 > a = 5; b = 10; raiz(a + b)
 3.87298
-
+```
 ## ✨ Versão 0.0.2
 
 Em deenvolvimento.
