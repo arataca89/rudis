@@ -59,9 +59,8 @@ arataca89@gmail.com
 Um agradecimento especial para:
 
 - **Comunidade de desenvolvedores** que compartilham conhecimento aberto
-- **Projetos inspiradores** como Python, Lua e BASIC
+- **Projetos inspiradores** como BASIC, Tcl/Tk, Python, Go e Rust, entre outros
 - **Calculadoras científicas** pela inspiração na abordagem prática
-- **Todos os contribuidores** que ajudam a melhorar este projeto
 
 ## 📄 Licença
 
