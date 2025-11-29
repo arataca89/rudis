@@ -274,20 +274,6 @@ rudis/
 - [x] Precedência de operadores correta
 - [x] Validação extensiva de todas as funcionalidades
 
-### VERSÃO 0.0.2 - EM DESENVOLVIMENTO
-- [ ] Múltiplas instruções por linha (;)
-- [ ] Comando print com formatação avançada:
-  - [ ] Cores ANSI (RED:texto)
-  - [ ] Alinhamento (left, center, right)
-  - [ ] Largura de campo (20:valor)
-  - [ ] Separadores (, = tabulação, ; = concatenação)
-
-### VERSÕES FUTURAS
-- [ ] Estruturas de controle (if/else, loops)
-- [ ] Funções definidas pelo usuário
-- [ ] Arrays e estruturas de dados
-- [ ] Sistema de módulos
-
 ---
 
 ## PRINCÍPIOS DE DESIGN
@@ -318,7 +304,7 @@ rudis/
 
 ---
 
-**Documento criado em**: 27 de Novembro de 2025  
+**Documento criado em**: 29 de Novembro de 2025  
 **Última atualização**: Funcionalidades validadas e roadmap v0.0.2  
 **Estado atual**: VERSÃO 0.0.1 FUNCIONAL - Calculadora avançada com REPL
 
