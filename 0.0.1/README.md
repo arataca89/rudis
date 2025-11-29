@@ -1,4 +1,4 @@
-# Rudis VERSÃO 0.0.1
+# Rudis versão 0.0.1
 
 ## METADADOS DO PROJETO
 - **Nome**: Rudis
