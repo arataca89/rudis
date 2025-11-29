@@ -1,7 +1,4 @@
-O problema é que o GitHub não renderizou o markdown corretamente. Vou te dar uma versão corrigida sem os caracteres especiais que podem estar causando problemas:
-
-```markdown
-# RELATÓRIO DE DESIGN DA LINGUAGEM RUDIS - VERSÃO 0.0.1
+# Rudis VERSÃO 0.0.1
 
 ## METADADOS DO PROJETO
 - **Nome**: Rudis
