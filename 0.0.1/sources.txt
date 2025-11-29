@@ -1,0 +1,17 @@
+# Arquivo de configuração do a89make
+# Lista os arquivos fonte (.c) do projeto, um por linha
+# Linhas iniciadas com # são comentários e serão ignoradas
+
+main.c
+lang.c
+lexer.c
+a89alloc.c
+parser.c
+functions.c
+evaluator.c
+help.c
+
+#test_lexer.c
+#test_functions.c
+#test_parser.c
+#test_evaluator.c
