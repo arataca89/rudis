@@ -264,15 +264,15 @@ rudis/
 ## ROADMAP - ESTADO ATUAL
 
 ### VERSÃO 0.0.1 - CONCLUÍDA
-- [x] REPL interativo com histórico
-- [x] 35+ funções built-in + aliases em português
-- [x] Sistema de variáveis com atribuição encadeada
-- [x] Sistema de ajuda paginado (PT/EN)
-- [x] Internacionalização completa
-- [x] Suporte a números hexadecimais e binários
-- [x] Múltiplos estilos de comentário
-- [x] Precedência de operadores correta
-- [x] Validação extensiva de todas as funcionalidades
+- ✅ REPL interativo com histórico
+- ✅ 35+ funções built-in + aliases em português
+- ✅ Sistema de variáveis com atribuição encadeada
+- ✅ Sistema de ajuda paginado (PT/EN)
+- ✅ Internacionalização completa
+- ✅ Suporte a números hexadecimais e binários
+- ✅ Múltiplos estilos de comentário
+- ✅ Precedência de operadores correta
+- ✅ Validação extensiva de todas as funcionalidades
 
 ---
 
