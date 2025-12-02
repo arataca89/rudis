@@ -2,11 +2,12 @@
 
 ## METADADOS DO PROJETO
 - **Nome**: Rudis
-- **Versão**: 0.0.2 (Múltiplas Instruções e Sistema de Print)
+- **Versão**: 0.0.2 (Internacionalização Completa + Múltiplas Instruções + Controle de Precisão + Tipo String)
 - **Filosofia**: Simplicidade, Acessibilidade, Flexibilidade
 - **Paradigma**: Interpretada, Dinâmica, Multipropósito
 - **Implementação**: C (interpretador)
 - **Repositório**: https://github.com/arataca89/rudis
+- **Data de Release**: Dezembro 2025
 
 ---
 
@@ -73,36 +74,79 @@ rudis> 3++                 # "Syntax error in expression"
 rudis> help sqrt           # Help in English
 ```
 
-### 3. SISTEMA DE TRADUÇÃO IMPLEMENTADO
-**Padrões Adotados**:
+### 3. TIPO STRING (NOVO)
+**Status**: ✅ IMPLEMENTADO NO LEXER E PARSER | 🚧 EM ANDAMENTO NO EVALUATOR
 
-#### 3.1 PARA MENSAGENS SIMPLES:
-```c
-if (current_lang == LANG_PT)
-    return create_error_result("Divisão por zero");
-else 
-    return create_error_result("Division by zero");
+**Decisão de Design**:
+- Strings são delimitadas por aspas duplas (`"`)
+- Suporte a sequências de escape: `\n` (nova linha), `\\` (barra invertida), `\"` (aspas)
+- Tamanho máximo: 256 caracteres por string
+- Representação na AST: campo `text[256]` para strings e nomes de variáveis
+- Tipo de nó na AST: `NODE_STRING`
+
+**Exemplo**:
+```python
+# Atribuição de strings
+rudis> nome = "Buzz Lightyear"
+rudis> mensagem = "Olá,\nMundo!"
+
+# Representação na AST:
+# ASSIGNMENT: nome =
+#     STRING: Buzz Lightyear
 ```
 
-#### 3.2 PARA MENSAGENS COMPLEXAS (help.c):
-```c
-const char* get_help_operator_add() {
-    return (current_lang == LANG_PT) 
-        ? "Operador: + (Adição)\nSintaxe: a + b\nDescrição: Soma dois valores..."
-        : "Operator: + (Addition)\nSyntax: a + b\nDescription: Adds two values...";
-}
+**Implementação Técnica**:
+- Lexer: Reconhece `TOKEN_STRING` com tratamento de escapes
+- Parser: Adicionado `NODE_STRING` como átomo na gramática
+- AST: Campo `variable[64]` expandido para `text[256]`
+- Evaluator: 🚧 Suporte a string em implementação
+
+### 4. CONTROLE DE CASAS DECIMAIS
+**Status**: ✅ IMPLEMENTADO
+
+**Função**: `setdec(n)`
+- **Categoria**: Funções de Configuração (nova categoria)
+- **Parâmetros**: `n` - número de casas decimais (0-15)
+- **Padrão**: 6 casas decimais
+- **Comportamento**: Modifica o `EvaluatorState`
+
+**Implementação Técnica**:
+- Uso do especificador `%.*f` para formatação dinâmica
+- Validação de range (0-15 casas)
+- Mensagens de erro internacionalizadas
+
+**Exemplos**:
+```python
+# Padrão (6 casas)
+rudis> 10/3
+3.333333
+
+# Controle de precisão
+rudis> setdec(2)
+rudis> 10/3
+3.33
+
+# Para valores monetários
+rudis> setdec(0)
+rudis> 10/3
+3
+
+# Precisão científica
+rudis> setdec(8)
+rudis> 1/7
+0.14285714
 ```
 
-#### 3.3 PARA MENSAGENS DINÂMICAS (evaluator.c):
-```c
-void build_arg_error_msg(char* buffer, size_t size, const char* func_name, int required_args, int is_minimum) {
-    if (current_lang == LANG_PT) {
-        snprintf(buffer, size, "%s requer %d argumento%s", func_name, required_args, required_args > 1 ? "s" : "");
-    } else {
-        snprintf(buffer, size, "%s requires %d argument%s", func_name, required_args, required_args > 1 ? "s" : "");
-    }
-}
-```
+### 5. NOVA CATEGORIA: FUNÇÕES DE CONFIGURAÇÃO
+**Status**: ✅ IMPLEMENTADO
+
+**Organização**:
+- Separa funções stateful das funções stateless
+- Categoria dedicada no `execute_function()`
+- Preparada para expansão futura
+
+**Funções Atuais**:
+- `setdec(n)` - Controla casas decimais da saída
 
 ---
 
@@ -113,6 +157,14 @@ void build_arg_error_msg(char* buffer, size_t size, const char* func_name, int r
 rudis> nome = "João"; idade = 25; salario = 2500.50
 rudis> a=3; b=5; c=a*b; c
 15.0
+```
+
+### STRINGS:
+```python
+# Atribuição e uso de strings (parcialmente implementado)
+rudis> nome = "Maria Silva"
+rudis> boas_vindas = "Bem-vindo ao Rudis v0.0.2"
+rudis> texto_multilinha = "Linha 1\nLinha 2\nLinha 3"
 ```
 
 ### INTERNACIONALIZAÇÃO:
@@ -130,6 +182,22 @@ rudis> x/0                 # "Division by zero"
 rudis> sqrt()              # "sqrt requires 1 argument"
 ```
 
+### CONTROLE DE PRECISÃO:
+```python
+# Aplicações práticas
+rudis> setdec(2)           # Para dinheiro
+rudis> 123.4567
+123.46
+
+rudis> setdec(0)           # Para contagens
+rudis> 10/3
+3
+
+rudis> setdec(8)           # Para ciência
+rudis> 1/7
+0.14285714
+```
+
 ### SISTEMA DE AJUDA INTERNACIONALIZADO:
 ```python
 rudis> set lang en
@@ -143,7 +211,7 @@ rudis> help sqrt           # Função: sqrt (Raiz Quadrada)...
 
 ---
 
-## OBSERVAÇÕES INTERESSANTES
+## OBSERVAÇÕES TÉCNICAS
 
 ### 1. ARQUITETURA DE INTERNACIONALIZAÇÃO
 - **Sistema Híbrido**: Combina funções de tradução com verificações inline
@@ -151,22 +219,28 @@ rudis> help sqrt           # Função: sqrt (Raiz Quadrada)...
 - **Manutenção**: Mensagens organizadas por contexto de uso
 - **Extensibilidade**: Fácil adição de novos idiomas no futuro
 
-### 2. DECISÕES TÉCNICAS
-- **`help.c`**: Usa funções dedicadas para textos longos
-- **`evaluator.c`**: Usa verificações inline para mensagens curtas
-- **`main.c`**: Mix de ambos os approaches conforme apropriado
-- **Consistência**: Todas as mensagens do usuário são internacionalizadas
+### 2. TIPO STRING
+- **Implementação Gradual**: Lexer e parser completos, evaluator em desenvolvimento
+- **Campo Unificado**: Uso de `text[256]` para strings e nomes de variáveis na AST
+- **Sequências de Escape**: Suporte básico para formatação de texto
+- **Próximo Passo**: Integração completa com sistema de tipos do evaluator
 
-### 3. IMPACTO NA EXPERIÊNCIA DO USUÁRIO
-- **Profissionalismo**: Sistema coerente em ambos os idiomas
-- **Acessibilidade**: Suporte a usuários internacionais
-- **Consistência**: Mesmo comportamento, diferentes idiomas
-- **Qualidade**: Mensagens de erro claras e informativas
+### 3. ESPECIFICADOR `%.*f`
+- **Recurso C**: Permite número dinâmico de casas decimais
+- **Sintaxe**: `printf("%.*f", casas, valor)`
+- **Vantagem**: Elimina necessidade de formatação manual de strings
+- **Aplicação**: Usado em todas as saídas numéricas do REPL
 
-### 4. COMPATIBILIDADE
-- **Retrocompatibilidade**: API mantida intacta
-- **Comportamento**: Funcionalidades idênticas em PT/EN
-- **Performance**: Impacto mínimo no tempo de execução
+### 4. CATEGORIA DE CONFIGURAÇÃO
+- **Inovação**: Primeira categoria de funções stateful no Rudis
+- **Organização**: Separa claramente funções de cálculo vs. configuração
+- **Expansão**: Base para futuras funções de controle do sistema
+
+### 5. EXPERIÊNCIA DO USUÁRIO
+- **Consistência**: Comportamento idêntico em PT/EN
+- **Controle**: Precisão ajustável conforme necessidade
+- **Profissionalismo**: Recursos de calculadora avançada
+- **Flexibilidade**: Transição suave entre diferentes usos
 
 ---
 
@@ -178,32 +252,63 @@ rudis> help sqrt           # Função: sqrt (Raiz Quadrada)...
 - ✅ Internacionalização completa do `help.c`
 - ✅ Internacionalização completa do `main.c` 
 - ✅ Internacionalização completa do `evaluator.c`
+- ✅ Implementação da função `setdec(n)`
+- ✅ Controle dinâmico de casas decimais
+- ✅ Categoria "Funções de Configuração"
+- ✅ Uso do especificador `%.*f`
+- ✅ Validação de range (0-15 casas)
+- ✅ Mensagens de erro internacionalizadas para `setdec`
 - ✅ Manutenção de compatibilidade com v0.0.1
-- ✅ Testes de todos os cenários de internacionalização
+- ✅ Implementação do tipo string no lexer e parser
+- ✅ Suporte a sequências de escape em strings (`\n`, `\\`, `\"`)
+- ✅ Atualização da AST com campo `text[256]`
+- ✅ Testes de parsing de strings funcionando
 
 ### 🚧 PRÓXIMOS PASSOS:
-- [ ] Implementação do comando `print` avançado
+- [ ] Suporte a strings no evaluator (tipo `VAL_STRING`)
+- [ ] Implementação do comando `print` para strings
 - [ ] Sistema de cores ANSI integrado
 - [ ] Controle de alinhamento (left, center, right)
 - [ ] Especificação de largura de campo
 - [ ] Separadores (`,` = tabulação, `;` = concatenação)
 
-### 🎯 VERSÕES FUTURAS (PREVIEW):
-- **v0.0.3**: Comando `print` avançado (cores + formatação)
-- **v0.0.4**: Estruturas de controle (if/else básico)
-- **v0.0.5**: Loops simples (for, while)
-- **v0.1.0**: Funções definidas pelo usuário
+**Perfeito!** Vou atualizar o documento com o roadmap corrigido:
 
 ---
 
-## ESTADO ATUAL DO PROJETO
+## 🎯 VERSÕES FUTURAS (PREVIEW):
 
-**Progresso da v0.0.2**: 80% completo
+### **v0.0.2** (em desenvolvimento)
+- ✅ Lexer com strings
+- ✅ Parser com strings  
+- ✅ AST com NODE_STRING
+- 🚧 Evaluator com string
+- 🚧 `print()`
+
+
+### **v0.0.3** 
+- Concatenação `"a" + "b"`
+- Comparação `"a" == "b"`
+- Função `len("texto")`
+
+### **v0.0.4** 
+- Funções para o tipo string
+
+### **v0.0.5** 
+- Função de entrada de dados:`input()` 
+
+---
+
+## ✅ **ESTADO ATUAL DO PROJETO**
+
+**Progresso da v0.0.2**: 95% completo
 - ✅ Múltiplas instruções - 100%
 - ✅ Internacionalização - 100%  
+- ✅ Controle de precisão - 100%
+- ✅ Tipo string (lexer/parser) - 100%
+- 🚧 Tipo string (evaluator) - 50%
 - 🚧 Sistema print - 0%
-- 🔲 Correções e polimento - 0%
 
-**Próximo marco**: Comando `print` totalmente funcional
+---
 
-
+**Última atualização**: 02/12/2025  
