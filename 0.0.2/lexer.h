@@ -26,6 +26,7 @@
  * - TOKEN_STRING: strings
  */
 typedef enum {
+    TOKEN_UNKNOWN = 0,  // TOKEN DESCONHECIDO
     TOKEN_NUMBER,
     TOKEN_IDENTIFIER,
     TOKEN_OPERATOR,
@@ -34,28 +35,22 @@ typedef enum {
     TOKEN_RPAREN,
     TOKEN_COMMA,
     TOKEN_ASSIGN,
-    TOKEN_SEMICOLON,    // ; (fim de instrução alternativo)
-    TOKEN_COMMENT,      // Comentários (serão ignorados pelo parser)
+    TOKEN_SEMICOLON,    // ; (fim de instrução. Permite encadear instruções em uma linha)
+    TOKEN_NEWLINE,      // '\n'(fim de linha/fim de instrução)
+    TOKEN_COMMENT,     
     TOKEN_EOF,
     TOKEN_ERROR,
     TOKEN_STRING,
 } RTokenType; // Rudis TokenType para não ter conflito com TokenType definido no winnt.h do Windows.
 
-/*
- * ESTRUTURA DO TOKEN
- * 
- * Cada token contém:
- * - type: o tipo do token (definido acima)
- * - value: valor numérico (TOKEN_NUMBER)
- * - text: texto do token (identificadores, funções e comentários)
- * - operator: caractere do operador (TOKEN_OPERATOR)
- */
 typedef struct {
     RTokenType type;
     double value;        // Para números
     char text[256];      // Para identificadores, funções, comentários e strings
     char operator;       // Para operadores
 } Token;
+
+void lexer_init_token(Token* token); 
 
 /*
  * ESTRUTURA DO LEXER

@@ -50,7 +50,9 @@ void set_language(Language lang) {
     current_lang = lang;
 }
 
+//===================================================================
 // MENSAGENS DE ERRO DO LEXER
+//===================================================================
 const char* get_error_invalid_number() {
     return (current_lang == LANG_PT) 
         ? "Erro: número inválido"
@@ -103,4 +105,63 @@ const char* get_error_string_too_long() {
     return (current_lang == LANG_PT) 
         ? "String muito longa (máximo %d caracteres)"
         : "String too long (maximum %d characters)";
+}
+
+// =============================================================================
+// FUNÇÕES DE TRADUÇÃO PARA main.c
+// =============================================================================
+const char* get_text_usage() {
+    return (current_lang == LANG_PT) 
+        ? "Uso: rudis [--lang pt|en]\n"
+          "  --lang pt    Iniciar em Português (padrão)\n"
+          "  --lang en    Start in English"
+        : "Usage: rudis [--lang pt|en]\n"
+          "  --lang pt    Start in Portuguese (default)\n"
+          "  --lang en    Start in English";
+}
+
+const char* get_text_variables_header() {
+    return (current_lang == LANG_PT) 
+        ? "\n=== VARIÁVEIS DEFINIDAS ==="
+        : "\n=== DEFINED VARIABLES ===";
+}
+
+const char* get_text_no_variables() {
+    return (current_lang == LANG_PT) 
+        ? "Nenhuma variável definida."
+        : "No variables defined.";
+}
+
+const char* get_text_variables_count(int count) {
+    static char buffer[50];
+    if (current_lang == LANG_PT) {
+        snprintf(buffer, sizeof(buffer), "Total: %d variáveis)", count);
+    } else {
+        snprintf(buffer, sizeof(buffer), "Total: %d variables)", count);
+    }
+    return buffer;
+}
+
+const char* get_text_language_changed_pt() {
+    return (current_lang == LANG_PT) 
+        ? "Idioma alterado para Português"
+        : "Language changed to Portuguese";
+}
+
+const char* get_text_language_changed_en() {
+    return (current_lang == LANG_PT) 
+        ? "Idioma alterado para Inglês"
+        : "Language changed to English";
+}
+
+const char* get_text_syntax_error() {
+    return (current_lang == LANG_PT) 
+        ? "Erro de sintaxe na expressão"
+        : "Syntax error in expression";
+}
+
+const char* get_text_reset_success() {
+    return (current_lang == LANG_PT) 
+        ? "Estado resetado. Todas as variáveis removidas."
+        : "State reset. All variables removed.";
 }

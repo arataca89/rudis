@@ -9,46 +9,47 @@
 #include "lexer.h"
 #include "a89alloc.h"
 
-/*
- * TIPOS DE NOS DA ARVORE SINTATICA ABSTRATA (AST) - RUDIS
- * 
- * Cada no da arvore representa um elemento da expressao:
- * - NODE_NUMBER: um numero literal
- * - NODE_VARIABLE: uma variavel (identificador completo)
- * - NODE_BINARY_OP: operacao binaria (+, -, *, /, %, ^)
- * - NODE_UNARY_OP: operacao unaria (!, -)
- * - NODE_FUNCTION: chamada de funcao
- * - NODE_ASSIGNMENT: atribuicao de valor a variavel
- */
+// ==================================================================
+// SISTEMA DE TIPOS  
+// ==================================================================
+
+typedef enum {
+    VAL_NUMBER,
+    VAL_STRING,
+    VAL_NULL
+} ValueType;
+
+typedef struct Value {
+    ValueType type;
+    double number;
+    char string[256];
+} Value;
+
+Value create_number_value(double num);
+Value create_string_value(const char* str);
+Value create_null_value(void);
+void print_value(Value val, int decimal_places);
+
+// ==================================================================
+// ÁRVORE SINTÁTICA (AST)
+// ==================================================================
 typedef enum {
     NODE_NUMBER,
+    NODE_STRING,
     NODE_VARIABLE,
-    NODE_BINARY_OP,
-    NODE_UNARY_OP,
+    NODE_BINARY_OP, //operacao binaria (+, -, *, /, %, ^)
+    NODE_UNARY_OP,  //operacao unaria (!, -)
     NODE_FUNCTION,
-    NODE_ASSIGNMENT
+    NODE_ASSIGNMENT,
+    NODE_SEQUENCE 
 } NodeType;
 
-/*
- * ESTRUTURA DO NO DA AST - RUDIS
- * 
- * Cada no contem:
- * - type: tipo do no
- * - value: valor numerico (para NODE_NUMBER)
- * - variable: nome da variavel (para NODE_VARIABLE)
- * - operator: operador (para NODE_BINARY_OP e NODE_UNARY_OP)
- * - function: nome da funcao (para NODE_FUNCTION)
- * - left, right: filhos esquerdo e direito (operacoes binarias)
- * - operand: operando (para operacoes unarias)
- * - args: argumentos da funcao (para NODE_FUNCTION)
- * - arg_count: numero de argumentos
- */
 typedef struct ASTNode {
     NodeType type;
     
     // Dados especificos do no
-    double value;           // Para NODE_NUMBER
-    char variable[64];      // Para NODE_VARIABLE (identificadores completos)
+    Value value;            // Para NODE_NUMBER e NODE_STRING
+    char text[256];         // Para NODE_VARIABLE (nome) 
     char operator;          // Para NODE_BINARY_OP e NODE_UNARY_OP
     char function[32];      // Para NODE_FUNCTION
     
@@ -60,27 +61,32 @@ typedef struct ASTNode {
     // Para funcoes com multiplos argumentos
     struct ASTNode** args;  // Array de argumentos
     int arg_count;          // Numero de argumentos
+
+    // Para NODE_SEQUENCE
+    struct ASTNode** statements;  // Array de statements
+    int stmt_count;  
 } ASTNode;
 
-/*
- * ESTRUTURA DO PARSER - RUDIS
- * 
- * Mantem o estado do analisador sintatico:
- * - lexer: referencia ao lexer
- * - current_token: token atual sendo analisado
- * - has_error: indica se ocorreu erro no parsing
- * - error_message: mensagem de erro descritiva
- */
+ASTNode* create_number_node(double value);
+ASTNode* create_variable_node(const char* variable);
+ASTNode* create_binary_op_node(char operator, ASTNode* left, ASTNode* right);
+ASTNode* create_unary_op_node(char operator, ASTNode* operand);
+ASTNode* create_function_node(const char* function, ASTNode** args, int arg_count);
+ASTNode* create_assignment_node(const char* variable, ASTNode* value);
+ASTNode* create_string_node(const char* str_value);
+ASTNode* create_sequence_node(ASTNode** statements, int stmt_count);
+
+void free_ast(ASTNode* node);
+
+// ==================================================================
+// PARSER
+// ==================================================================
 typedef struct {
     Lexer* lexer;
     Token current_token;
     int has_error;
     char error_message[100];
 } Parser;
-
-/*
- * FUNCOES DO PARSER - RUDIS
- */
 
 // Inicializa o parser
 void parser_init(Parser* parser, Lexer* lexer);
@@ -97,18 +103,27 @@ void parser_set_error(Parser* parser, const char* message);
 // Valida numero de argumentos das funcoes RUDIS
 int validate_function_args(Parser* parser, const char* function_name, int arg_count);
 
-// Cria nos da AST
-ASTNode* create_number_node(double value);
-ASTNode* create_variable_node(const char* variable);
-ASTNode* create_binary_op_node(char operator, ASTNode* left, ASTNode* right);
-ASTNode* create_unary_op_node(char operator, ASTNode* operand);
-ASTNode* create_function_node(const char* function, ASTNode** args, int arg_count);
-ASTNode* create_assignment_node(const char* variable, ASTNode* value);
 
-// Libera memoria da AST
-void free_ast(ASTNode* node);
+/********************************************************************
+FUNCOES DE PARSING 
 
-// Funcoes de parsing (seguindo a gramatica RUDIS)
+GRAMATICA v0.0.2
+program          := statement_list
+statement_list   := statement ((';' | NEWLINE) statement)*
+statement        := expression
+expression       := assignment | arithmetic_expr
+assignment       := IDENTIFIER '=' expression
+arithmetic_expr  := term (('+' | '-') term)*
+term             := factor (('*' | '/' | '%') factor)*
+factor           := power ('!')?
+power            := atom ('^' power)?
+atom             := NUMBER | STRING | IDENTIFIER | function_call | '(' expression ')' | '-' atom
+function_call    := FUNCTION '(' argument_list ')'
+argument_list    := expression (',' expression)*
+********************************************************************/
+ASTNode* parse_program(Parser* parser); // a ser implementada quando necessário
+ASTNode* parse_statement_list(Parser* parser);
+ASTNode* parse_statement(Parser* parser);
 ASTNode* parse_expression(Parser* parser);
 ASTNode* parse_assignment(Parser* parser);
 ASTNode* parse_arithmetic_expr(Parser* parser);
@@ -122,6 +137,6 @@ ASTNode* parse_function_call(Parser* parser, const char* function_name);
 ASTNode* parse(Lexer* lexer);
 
 // Funcao para imprimir a AST (para debug)
-void print_ast(ASTNode* node, int indent);
+void print_ast(ASTNode* node, int indent, int decimal_places);
 
 #endif // PARSER_H

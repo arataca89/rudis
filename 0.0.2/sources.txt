@@ -2,17 +2,20 @@
 # Lista os arquivos fonte (.c) do projeto, um por linha
 # Linhas iniciadas com # são comentários e serão ignoradas
 
-#main.c
+main.c
 lang.c
 lexer.c
-#a89alloc.c
-#parser.c
-#functions.c
-#evaluator.c
+a89alloc.c
+parser.c
+functions.c
+evaluator.c
 help.c
 
-test_lexer2.c
-
+#test_evaluator0.0.2.c
+#test_parser0.0.2.c
+#test_lexer0.0.2_2.c
+#test_lexer0.0.2.c
+#test_string.c
 #test_lexer.c
 #test_functions.c
 #test_parser.c

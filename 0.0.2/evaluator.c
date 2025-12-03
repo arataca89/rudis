@@ -8,7 +8,6 @@
 #include "lang.h"
 #include "a89alloc.h"
 
-
 // ===========================================
 // FUNÇÕES AUXILIARES PARA MENSAGENS DE ERRO 
 // ===========================================
@@ -49,6 +48,7 @@ void build_math_error_msg(char* buffer, size_t size, const char* func_name) {
     }
 }
 
+
 /*
  * INICIALIZAÇÃO DO AVALIADOR
  */
@@ -72,10 +72,7 @@ void evaluator_free(EvaluatorState* state) {
     state->variable_count = 0;
 }
 
-/*
- * OBTÉM VALOR DE UMA VARIÁVEL
- */
-double get_variable(EvaluatorState* state, const char* variable_name) {
+Value get_variable(EvaluatorState* state, const char* variable_name) {
     Variable* current = state->variables;
     while (current != NULL) {
         if (strcmp(current->name, variable_name) == 0) {
@@ -83,14 +80,10 @@ double get_variable(EvaluatorState* state, const char* variable_name) {
         }
         current = current->next;
     }
-    return 0.0; // Retorna 0 se variável não existir
+    return create_null_value(); // Retorna null
 }
 
-/*
- * DEFINE VALOR DE UMA VARIÁVEL
- */
-void set_variable(EvaluatorState* state, const char* variable_name, double value) {
-    // Procura variável existente
+void set_variable(EvaluatorState* state, const char* variable_name, Value value) {
     Variable* current = state->variables;
     while (current != NULL) {
         if (strcmp(current->name, variable_name) == 0) {
@@ -112,9 +105,6 @@ void set_variable(EvaluatorState* state, const char* variable_name, double value
     state->variable_count++;
 }
 
-/*
- * VERIFICA SE VARIÁVEL EXISTE
- */
 int variable_exists(EvaluatorState* state, const char* variable_name) {
     Variable* current = state->variables;
     while (current != NULL) {
@@ -126,10 +116,26 @@ int variable_exists(EvaluatorState* state, const char* variable_name) {
     return 0;
 }
 
-/*
- * CRIA RESULTADO DE SUCESSO
- */
-EvaluatorResult create_success_result(double value, int is_assignment) {
+void print_variables(EvaluatorState* state) {
+    printf("=== Variáveis no estado ===\n");
+    
+    Variable* current = state->variables;
+    int count = 0;
+    
+    while (current != NULL) {
+        printf("%d. %s: ", ++count, current->name);
+        print_value(current->value, state->decimal_places); 
+        printf("\n");
+        current = current->next;
+    }
+    
+    if (count == 0) {
+        printf("Nenhuma variável definida\n");
+    }
+    printf("===========================\n");
+}
+
+EvaluatorResult create_success_result(Value value, int is_assignment) {
     EvaluatorResult result;
     result.success = 1;
     result.value = value;
@@ -138,22 +144,19 @@ EvaluatorResult create_success_result(double value, int is_assignment) {
     return result;
 }
 
-/*
- * CRIA RESULTADO DE ERRO
- */
 EvaluatorResult create_error_result(const char* message) {
     EvaluatorResult result;
     result.success = 0;
-    result.value = 0.0;
+    result.value = create_null_value();
     strncpy(result.error_message, message, sizeof(result.error_message) - 1);
     result.error_message[sizeof(result.error_message) - 1] = '\0';
     result.is_assignment = 0;
     return result;
 }
 
-/*
- * AVALIA UMA AST
- */
+//===================================================================
+// AVALIA A AST
+//===================================================================
 EvaluatorResult evaluate(EvaluatorState* state, ASTNode* node) {
     if (node == NULL) {
         if(current_lang == LANG_PT)
@@ -166,9 +169,12 @@ EvaluatorResult evaluate(EvaluatorState* state, ASTNode* node) {
         case NODE_NUMBER:
             return create_success_result(node->value, 0);
             
+        case NODE_STRING:
+            return create_success_result(node->value, 0);
+            
         case NODE_VARIABLE:  
-            if (variable_exists(state, node->variable)) {  
-                return create_success_result(get_variable(state, node->variable), 0);  
+            if (variable_exists(state, node->text)) {  
+                return create_success_result(get_variable(state, node->text), 0);  
             } else {
                 if (current_lang == LANG_PT)
                     return create_error_result("Variável não definida");
@@ -182,7 +188,7 @@ EvaluatorResult evaluate(EvaluatorState* state, ASTNode* node) {
                 if (!right_result.success) {
                     return right_result;
                 }
-                set_variable(state, node->variable, right_result.value);  // CORREÇÃO: node->variable
+                set_variable(state, node->text, right_result.value);  
                 return create_success_result(right_result.value, 1);
             }
             
@@ -198,37 +204,45 @@ EvaluatorResult evaluate(EvaluatorState* state, ASTNode* node) {
                     return right_result;
                 }
                 
+                // Verificar se ambos são números
+                if (left_result.value.type != VAL_NUMBER || right_result.value.type != VAL_NUMBER) {
+                    if (current_lang == LANG_PT)
+                        return create_error_result("Operações aritméticas requerem números");
+                    else 
+                        return create_error_result("Arithmetic operations require numbers");
+                }
+                
                 double result;
                 switch (node->operator) {
-                    case '+': result = left_result.value + right_result.value; break;
-                    case '-': result = left_result.value - right_result.value; break;
-                    case '*': result = left_result.value * right_result.value; break;
+                    case '+': result = left_result.value.number + right_result.value.number; break;
+                    case '-': result = left_result.value.number - right_result.value.number; break;
+                    case '*': result = left_result.value.number * right_result.value.number; break;
                     case '/': 
-                        if (right_result.value == 0) {
+                        if (right_result.value.number == 0) {
                             if (current_lang == LANG_PT)
                                 return create_error_result("Divisão por zero");
                             else 
                                 return create_error_result("Division by zero");
                         }
-                        result = left_result.value / right_result.value; 
+                        result = left_result.value.number / right_result.value.number; 
                         break;
                     case '%': 
-                        if ((int)right_result.value == 0) {
+                        if ((int)right_result.value.number == 0) {
                             if (current_lang == LANG_PT)
                                 return create_error_result("Módulo por zero");
                             else 
                                 return create_error_result("Modulo by zero");
                         }
-                        result = (int)left_result.value % (int)right_result.value; 
+                        result = (int)left_result.value.number % (int)right_result.value.number; 
                         break;
-                    case '^': result = power(left_result.value, right_result.value); break;
+                    case '^': result = power(left_result.value.number, right_result.value.number); break;
                     default: 
                         if (current_lang == LANG_PT)
                             return create_error_result("Operador binário inválido");
                         else 
                             return create_error_result("Invalid binary operator");
                 }
-                return create_success_result(result, 0);
+                return create_success_result(create_number_value(result), 0);
             }
             
         case NODE_UNARY_OP:
@@ -238,17 +252,25 @@ EvaluatorResult evaluate(EvaluatorState* state, ASTNode* node) {
                     return operand_result;
                 }
                 
+                // Verificar se é número
+                if (operand_result.value.type != VAL_NUMBER) {
+                    if (current_lang == LANG_PT)
+                        return create_error_result("Operações unárias requerem números");
+                    else 
+                        return create_error_result("Unary operations require numbers");
+                }
+                
                 double result;
                 switch (node->operator) {
-                    case '-': result = -operand_result.value; break;
-                    case '!': result = factorial(operand_result.value); break;
+                    case '-': result = -operand_result.value.number; break;
+                    case '!': result = factorial(operand_result.value.number); break;
                     default: 
                         if (current_lang == LANG_PT)
                             return create_error_result("Operador unário inválido");
                         else 
                             return create_error_result("Invalid unary operator");
                 }
-                return create_success_result(result, 0);
+                return create_success_result(create_number_value(result), 0);
             }
             
         case NODE_FUNCTION:  
@@ -261,7 +283,13 @@ EvaluatorResult evaluate(EvaluatorState* state, ASTNode* node) {
                 }
                 
                 // Avalia todos os argumentos
-                double* arg_values = (double*)A89ALLOC(node->arg_count * sizeof(double));
+                Value* arg_values = (Value*)A89ALLOC(node->arg_count * sizeof(Value));
+                if (!arg_values) {
+                    if (current_lang == LANG_PT)
+                        return create_error_result("Falha de alocação de memória");
+                    else 
+                        return create_error_result("Memory allocation failed");
+                }
                 
                 for (int i = 0; i < node->arg_count; i++) {
                     EvaluatorResult arg_result = evaluate(state, node->args[i]);
@@ -273,12 +301,40 @@ EvaluatorResult evaluate(EvaluatorState* state, ASTNode* node) {
                 }
                 
                 // Executa a função
-                EvaluatorResult func_result = execute_function(state, node->function, arg_values, node->arg_count);  // CORREÇÃO: node->function
+                EvaluatorResult func_result = execute_function(state, node->function, arg_values, node->arg_count);
                 
                 // Libera memória
                 a89free(arg_values);
                 
                 return func_result;
+            }
+
+        case NODE_SEQUENCE:
+            {
+                Value last_value = create_null_value();
+                int has_value = 0;  // Flag para saber se algum statement retornou valor
+                
+                // Executar todos os statements em sequência
+                for (int i = 0; i < node->stmt_count; i++) {
+                    EvaluatorResult stmt_result = evaluate(state, node->statements[i]);
+                    
+                    if (!stmt_result.success) {
+                        return stmt_result;  // Propagação de erro
+                    }
+                    
+                    // Armazenar o último valor não-nulo (que não seja de atribuição)
+                    if (!stmt_result.is_assignment) {
+                        last_value = stmt_result.value;
+                        has_value = 1;
+                    }
+                }
+                
+                if (has_value) {
+                    return create_success_result(last_value, 0);
+                } else {
+                    // Se todos foram assignments, retorna sucesso sem valor
+                    return create_success_result(create_null_value(), 1);
+                }
             }
             
         default:
@@ -293,258 +349,312 @@ EvaluatorResult evaluate(EvaluatorState* state, ASTNode* node) {
  * EXECUÇÃO DE FUNÇÕES
  */
 EvaluatorResult execute_function(EvaluatorState* state, const char* function_name, 
-                                 double* arg_values, int arg_count) {
+                                 Value* arg_values, int arg_count) {
     double result;
     char error_msg[256];
 
+    // ============ FUNÇÃO PRINT (tratamento especial) ============
+    if (strcmp(function_name, "print") == 0) {
+        if (arg_count < 1) {
+            build_arg_error_msg(error_msg, sizeof(error_msg), "print", 1, 1);
+            return create_error_result(error_msg);
+        }
+        
+        // Processa cada argumento do print
+        for (int i = 0; i < arg_count; i++) {
+            print_value(arg_values[i], state->decimal_places); 
+            if (i < arg_count - 1) printf(" ");
+        }
+        printf("\n");
+        
+        return create_success_result(create_null_value(), 1); // Sucesso silencioso
+    }
+
+    // ============ VERIFICAR ARGUMENTOS PARA FUNÇÕES MATEMÁTICAS ============
+    for (int i = 0; i < arg_count; i++) {
+        if (arg_values[i].type != VAL_NUMBER) {
+            if (current_lang == LANG_PT) {
+                snprintf(error_msg, sizeof(error_msg), 
+                         "Função %s requer argumentos numéricos", function_name);
+            } else {
+                snprintf(error_msg, sizeof(error_msg), 
+                         "Function %s requires numeric arguments", function_name);
+            }
+            return create_error_result(error_msg);
+        }
+    }
+    
+    // Converter Value[] para double[]
+    double* double_args = A89ALLOC(arg_count * sizeof(double));
+    if (!double_args) {
+        if (current_lang == LANG_PT)
+            return create_error_result("Falha de alocação de memória para double_args");
+        else 
+            return create_error_result("Memory allocation failed for double_args");
+    }
+    
+    for (int i = 0; i < arg_count; i++) {
+        double_args[i] = arg_values[i].number;
+    }
 
     // ============ FUNÇÕES MATEMÁTICAS ============
     if (strcmp(function_name, "sqrt") == 0 || strcmp(function_name, "raiz") == 0) {
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "sqrt", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_sqrt(arg_values[0]);
+        result = math_sqrt(double_args[0]);
     }
     else if (strcmp(function_name, "sin") == 0 || strcmp(function_name, "sen") == 0) {
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "sin", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_sin(arg_values[0]);
+        result = math_sin(double_args[0]);
     }
     else if (strcmp(function_name, "cos") == 0) {
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "cos", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_cos(arg_values[0]);
+        result = math_cos(double_args[0]);
     }
     else if (strcmp(function_name, "tan") == 0) {
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "tan", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_tan(arg_values[0]);
+        result = math_tan(double_args[0]);
     }
     else if (strcmp(function_name, "log") == 0 || strcmp(function_name, "log10") == 0) {
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "log", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_log10(arg_values[0]);
+        result = math_log10(double_args[0]);
     }
     else if (strcmp(function_name, "ln") == 0) {
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "ln", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_ln(arg_values[0]);
+        result = math_ln(double_args[0]);
     }
     else if (strcmp(function_name, "exp") == 0) {
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "exp", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_exp(arg_values[0]);
+        result = math_exp(double_args[0]);
     }
     else if (strcmp(function_name, "abs") == 0) {
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "abs", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_abs(arg_values[0]);
+        result = math_abs(double_args[0]);
     }
     
     // ============ FUNÇÕES ESTATÍSTICAS ============
     else if (strcmp(function_name, "mean") == 0 || strcmp(function_name, "media") == 0) {
         if (arg_count < 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "mean", 1, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_mean(arg_values, arg_count);
+        result = math_mean(double_args, arg_count);
     }
     else if (strcmp(function_name, "median") == 0 || strcmp(function_name, "mediana") == 0) {
         if (arg_count < 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "median", 1, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_median(arg_values, arg_count);
+        result = math_median(double_args, arg_count);
     }
     else if (strcmp(function_name, "std") == 0 || strcmp(function_name, "desvio") == 0) {
         if (arg_count < 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "std", 1, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_std(arg_values, arg_count);
+        result = math_std(double_args, arg_count);
     }
     else if (strcmp(function_name, "variance") == 0 || strcmp(function_name, "variancia") == 0) {
         if (arg_count < 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "variance", 1, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_variance(arg_values, arg_count);
+        result = math_variance(double_args, arg_count);
     }
     else if (strcmp(function_name, "mode") == 0 || strcmp(function_name, "moda") == 0) {
         if (arg_count < 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "mode", 1, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_mode(arg_values, arg_count);
+        result = math_mode(double_args, arg_count);
     }
     else if (strcmp(function_name, "sum") == 0 || strcmp(function_name, "soma") == 0) {
         if (arg_count < 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "sum", 1, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_sum(arg_values, arg_count);
+        result = math_sum(double_args, arg_count);
     }
     else if (strcmp(function_name, "min") == 0 || strcmp(function_name, "minimo") == 0) {
         if (arg_count < 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "min", 1, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_min(arg_values, arg_count);
+        result = math_min(double_args, arg_count);
     }
     else if (strcmp(function_name, "max") == 0 || strcmp(function_name, "maximo") == 0) {
         if (arg_count < 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "max", 1, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_max(arg_values, arg_count);
+        result = math_max(double_args, arg_count);
     }
     
     // ============ FUNÇÕES FINANCEIRAS ============
     else if (strcmp(function_name, "pv") == 0 || strcmp(function_name, "vp") == 0) {
         if (arg_count != 3) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "pv", 3, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_pv(arg_values[0], arg_values[1], arg_values[2]);
+        result = math_pv(double_args[0], double_args[1], double_args[2]);
     }
     else if (strcmp(function_name, "fv") == 0 || strcmp(function_name, "vf") == 0) {
         if (arg_count != 3) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "fv", 3, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_fv(arg_values[0], arg_values[1], arg_values[2]);
+        result = math_fv(double_args[0], double_args[1], double_args[2]);
     }
     else if (strcmp(function_name, "pmt") == 0 || strcmp(function_name, "pagamento") == 0) {
         if (arg_count != 3) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "pmt", 3, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_pmt(arg_values[0], arg_values[1], arg_values[2]);
+        result = math_pmt(double_args[0], double_args[1], double_args[2]);
     }
     else if (strcmp(function_name, "nper") == 0 || strcmp(function_name, "periodos") == 0) {
         if (arg_count != 3) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "nper", 3, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_nper(arg_values[0], arg_values[1], arg_values[2]);
+        result = math_nper(double_args[0], double_args[1], double_args[2]);
     }
     else if (strcmp(function_name, "rate") == 0 || strcmp(function_name, "taxa") == 0) {
         if (arg_count != 4) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "rate", 4, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_rate(arg_values[0], arg_values[1], arg_values[2], arg_values[3]);
+        result = math_rate(double_args[0], double_args[1], double_args[2], double_args[3]);
     }
     else if (strcmp(function_name, "si") == 0 || strcmp(function_name, "js") == 0) {
         if (arg_count != 3) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "si", 3, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_simple_interest(arg_values[0], arg_values[1], arg_values[2]);
+        result = math_simple_interest(double_args[0], double_args[1], double_args[2]);
     }
     else if (strcmp(function_name, "fv_si") == 0 || strcmp(function_name, "montante_js") == 0) {
         if (arg_count != 3) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "fv_si", 3, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_simple_amount(arg_values[0], arg_values[1], arg_values[2]);
+        result = math_simple_amount(double_args[0], double_args[1], double_args[2]);
     }
     else if (strcmp(function_name, "ci") == 0 || strcmp(function_name, "jc") == 0) {
         if (arg_count != 3) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "ci", 3, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_compound_interest(arg_values[0], arg_values[1], arg_values[2]);
+        result = math_compound_interest(double_args[0], double_args[1], double_args[2]);
     }
     else if (strcmp(function_name, "fv_ci") == 0 || strcmp(function_name, "montante_jc") == 0) {
         if (arg_count != 3) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "fv_ci", 3, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
-        result = math_compound_amount(arg_values[0], arg_values[1], arg_values[2]);
+        result = math_compound_amount(double_args[0], double_args[1], double_args[2]);
     }
     else if (strcmp(function_name, "npv") == 0 || strcmp(function_name, "vpl") == 0) {
         if (arg_count < 2) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "npv", 2, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
         // Primeiro argumento é a taxa, os demais são fluxos de caixa
-        double rate = arg_values[0];
-        double* cashflows = &arg_values[1];
+        double rate = double_args[0];
+        double* cashflows = &double_args[1];
         int cf_count = arg_count - 1;
         result = math_npv(rate, cashflows, cf_count);
     }
     else if (strcmp(function_name, "irr") == 0 || strcmp(function_name, "tir") == 0) {
         if (arg_count < 2) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "irr", 2, 1);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
         // Todos os argumentos são fluxos de caixa
         double guess = 0.1; // Chute inicial padrão
-        result = math_irr(arg_values, arg_count, guess);
+        result = math_irr(double_args, arg_count, guess);
     }
-    // ============ FUNÇÕES DE CONFIGURAÇÃO ============ ⭐️ NOVA!
+    // ============ FUNÇÕES DE CONFIGURAÇÃO ============ 
     else if (strcmp(function_name, "setdec") == 0) {
         // Implementação do setdec
         if (arg_count != 1) {
             build_arg_error_msg(error_msg, sizeof(error_msg), "setdec", 1, 0);
+            a89free(double_args);
             return create_error_result(error_msg);
         }
         
-        int places = (int)arg_values[0];
+        int places = (int)double_args[0];
         if (places < 0 || places > 15) {
             if (current_lang == LANG_PT)
                 snprintf(error_msg, sizeof(error_msg), "setdec: número de casas deve estar entre 0 e 15");
             else 
                 snprintf(error_msg, sizeof(error_msg), "setdec: number of places must be between 0 and 15");
+            a89free(double_args);
             return create_error_result(error_msg);
         }
         
         state->decimal_places = places;
-        return create_success_result(0.0, 1); // Sucesso silencioso
+        a89free(double_args);
+        return create_success_result(create_number_value(0.0), 1); // Sucesso silencioso
     }
-
-    //================ FUNÇÕES DE ENTRADA/SAIDA ================================
-    else if (strcmp(function_name, "print") == 0) {
-        if (arg_count < 1) {
-            build_arg_error_msg(error_msg, sizeof(error_msg), "median", 1, 1);
-            return create_error_result(error_msg);
-        }
-        // Processa cada argumento do print
-        for (int i = 0; i < arg_count; i++) {
-            // TODO: Implementar parsing especial para:
-            // 1. CORES: RED:, GREEN:, BLUE:, etc.
-            // 2. ALINHAMENTO: left:, center:, right:
-            // 3. LARGURA: 20:, 30:, etc.
-            // 4. SEPARADORES: , (tabulado) vs ; (concatenação)
-            
-            // Por enquanto, só mostra o valor
-            printf("%.*f ", state->decimal_places, arg_values[i]);
-        }
-        printf("\n");
-        
-        return create_success_result(0.0, 1); // Sucesso silencioso
-    }
-
     else {
         build_unknown_function_msg(error_msg, sizeof(error_msg), function_name);
+        a89free(double_args);
         return create_error_result(error_msg);
     }
+    
+    // Liberar memória
+    a89free(double_args);
     
     // Verifica se resultado é NAN
     if (isnan(result)) {
@@ -552,5 +662,5 @@ EvaluatorResult execute_function(EvaluatorState* state, const char* function_nam
         return create_error_result(error_msg);
     }
     
-    return create_success_result(result, 0);
+    return create_success_result(create_number_value(result), 0);
 }

@@ -31,4 +31,13 @@ const char* get_error_unknown_char();
 const char* get_error_unfinished_string();
 const char* get_error_string_too_long();
 
+// FUNÇÕES DE TRADUÇÃO PARA main.c
+const char* get_text_usage(void);
+const char* get_text_variables_header(void);
+const char* get_text_no_variables(void);
+const char* get_text_variables_count(int count);
+const char* get_text_language_changed_pt(void);
+const char* get_text_language_changed_en(void);
+const char* get_text_syntax_error(void);
+const char* get_text_reset_success(void);
 #endif

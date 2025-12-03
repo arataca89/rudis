@@ -26,64 +26,6 @@ void setup_utf8() {
 // Estado global do evaluator
 EvaluatorState evaluator_state;
 
-// =============================================================================
-// FUNÇÕES DE TRADUÇÃO PARA main.c
-// =============================================================================
-
-const char* get_text_usage() {
-    return (current_lang == LANG_PT) 
-        ? "Uso: rudis [--lang pt|en]\n"
-          "  --lang pt    Iniciar em Português (padrão)\n"
-          "  --lang en    Start in English"
-        : "Usage: rudis [--lang pt|en]\n"
-          "  --lang pt    Start in Portuguese (default)\n"
-          "  --lang en    Start in English";
-}
-
-const char* get_text_variables_header() {
-    return (current_lang == LANG_PT) 
-        ? "\n=== VARIÁVEIS DEFINIDAS ==="
-        : "\n=== DEFINED VARIABLES ===";
-}
-
-const char* get_text_no_variables() {
-    return (current_lang == LANG_PT) 
-        ? "Nenhuma variável definida."
-        : "No variables defined.";
-}
-
-const char* get_text_variables_count(int count) {
-    static char buffer[50];
-    if (current_lang == LANG_PT) {
-        snprintf(buffer, sizeof(buffer), "Total: %d variáveis)", count);
-    } else {
-        snprintf(buffer, sizeof(buffer), "Total: %d variables)", count);
-    }
-    return buffer;
-}
-
-const char* get_text_language_changed_pt() {
-    return (current_lang == LANG_PT) 
-        ? "Idioma alterado para Português"
-        : "Language changed to Portuguese";
-}
-
-const char* get_text_language_changed_en() {
-    return (current_lang == LANG_PT) 
-        ? "Idioma alterado para Inglês"
-        : "Language changed to English";
-}
-
-const char* get_text_syntax_error() {
-    return (current_lang == LANG_PT) 
-        ? "Erro de sintaxe na expressão"
-        : "Syntax error in expression";
-}
-
-// =============================================================================
-// FUNÇÕES PRINCIPAIS
-// =============================================================================
-
 void print_usage() {
     printf("%s\n", get_text_usage());
 }
@@ -142,12 +84,14 @@ void list_variables() {
     int count = 0;
     
     while (current != NULL) {
-        printf("  %s = %g\n", current->name, current->value);
+        printf("  %s = ", current->name);
+        print_value(current->value, evaluator_state.decimal_places);
+        printf("\n");
         current = current->next;
         count++;
     }
     
-    printf("%s\n", get_text_variables_count(count));
+    printf("Total: %d variáveis\n", count);
 }
 
 void clear_screen() {
@@ -158,38 +102,6 @@ void clear_screen() {
     #endif
 }
 
-void process_single_instruction(const char* instruction) {
-    // Processa uma única instrução
-    Lexer lexer;
-    lexer_init(&lexer, instruction);
-    
-    ASTNode* ast = parse(&lexer);
-    
-    if (ast != NULL) {
-        EvaluatorResult result = evaluate(&evaluator_state, ast);
-        
-        if (result.success) {
-            if (!result.is_assignment) {
-                // Mostra resultado de expressões
-                //printf(SUCCESS_COLOR "%g\n" RESET, result.value);
-                printf(SUCCESS_COLOR "%.*f\n" RESET, 
-               evaluator_state.decimal_places, result.value);
-            }
-            // Para atribuições, não mostra nada (comportamento atual)
-        } else {
-            if (current_lang == LANG_PT){
-                printf(ERROR_COLOR "Erro: %s\n" RESET, result.error_message);
-            } else {
-                printf(ERROR_COLOR "Error: %s\n" RESET, result.error_message);
-            }
-        }
-        
-        free_ast(ast);
-    } else {
-        printf(ERROR_COLOR "%s\n" RESET, get_text_syntax_error());
-    }
-}
-
 void process_input(const char* input) {
     // Ignora entradas vazias
     if (strlen(input) == 0) {
@@ -197,11 +109,9 @@ void process_input(const char* input) {
     }
     
     // Comandos especiais
-    else if (strncmp(input, "help", 4) == 0) {
-        // Extrai o argumento depois de "help"
+    if (strncmp(input, "help", 4) == 0) {
         const char* argument = input + 4;
-        while (*argument == ' ') argument++; // Pula espaços
-        
+        while (*argument == ' ') argument++;
         handle_help_command(argument);
         return;
     }
@@ -211,6 +121,12 @@ void process_input(const char* input) {
     }
     else if (strcmp(input, "vars") == 0) {
         list_variables();
+        return;
+    }
+    else if (strcmp(input, "reset") == 0) {
+        evaluator_free(&evaluator_state);
+        evaluator_init(&evaluator_state);
+        printf(INFO_COLOR "%s\n" RESET, get_text_reset_success());
         return;
     }
     else if (strcmp(input, "set lang pt") == 0) {
@@ -223,20 +139,36 @@ void process_input(const char* input) {
         printf(INFO_COLOR "%s\n" RESET, get_text_language_changed_en());
         return;
     }
-
-    // Dividir input por ';' para múltiplas instruções
-    char* input_copy = strdup(input);
-    char* instruction = strtok(input_copy, ";");
-    
-    while (instruction != NULL) {
-        // Pula instruções vazias, evita ";;"
-        if (strlen(instruction) > 0) {
-            process_single_instruction(instruction);
-        }
-        instruction = strtok(NULL, ";");
+    else if (strcmp(input, "exit") == 0 || strcmp(input, "quit") == 0) {
+        printf(SUCCESS_COLOR "%s\n" RESET, get_text_goodbye());
+        exit(0);
     }
+
+    // Processa expressões matemáticas
+    Lexer lexer;
+    lexer_init(&lexer, input);
+    
+    ASTNode* ast = parse(&lexer);
+    
+    if (ast != NULL) {
+        EvaluatorResult result = evaluate(&evaluator_state, ast);
         
-    free(input_copy); 
+        if (result.success) {
+            if (!result.is_assignment && result.value.type != VAL_NULL) {
+                printf(SUCCESS_COLOR);
+                print_value(result.value, evaluator_state.decimal_places); 
+                printf(RESET "\n");
+            }
+        } else {
+            printf(ERROR_COLOR "%s: %s\n" RESET, 
+                   (current_lang == LANG_PT ? "Erro" : "Error"), 
+                   result.error_message);
+        }
+        
+        free_ast(ast);
+    } else {
+        printf(ERROR_COLOR "%s\n" RESET, get_text_syntax_error());
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -266,19 +198,13 @@ int main(int argc, char *argv[]) {
         // Remove newline
         input[strcspn(input, "\n")] = 0;
         
-        // Comandos de saída
-        if (strcmp(input, "exit") == 0 || strcmp(input, "quit") == 0) {
-            printf(SUCCESS_COLOR "%s\n" RESET, get_text_goodbye());
-            break;
-        }
-        
         // Processa o input
         process_input(input);
     }
     
     // Limpeza final
     evaluator_free(&evaluator_state);
-    //a89check_leaks();
+    // a89check_leaks();
     
     return 0;
 }

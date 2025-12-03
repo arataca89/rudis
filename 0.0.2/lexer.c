@@ -1,6 +1,14 @@
 #include "lexer.h"
 #include "lang.h"  
 
+void lexer_init_token(Token* token) {
+    if (token == NULL) return;    
+    token->type = TOKEN_UNKNOWN;
+    token->value = 0.0;
+    token->text[0] = '\0';
+    token->operator = '\0';  
+}
+
 void lexer_init(Lexer* lexer, const char* input) {
     lexer->input = input;
     lexer->input_size = (int)strlen(input);
@@ -19,7 +27,8 @@ void lexer_advance(Lexer* lexer) {
 
 void lexer_skip_whitespace(Lexer* lexer) {
     while (lexer->current_char != '\0' &&
-           isspace(lexer->current_char)) {
+           isspace(lexer->current_char) && 
+           lexer->current_char != '\n') {
         lexer_advance(lexer);
     }
 }
@@ -176,6 +185,7 @@ double lexer_binary_str_to_double(const char* str) {
  */
 Token lexer_read_number(Lexer* lexer) {
     Token token;
+    lexer_init_token(&token);
     char buffer[64];
     int i = 0;
 
@@ -220,6 +230,7 @@ Token lexer_read_number(Lexer* lexer) {
  */
 Token lexer_read_hexadecimal(Lexer *lexer) {
     Token token;
+    lexer_init_token(&token);
     char buffer[64];
     int i = 0;
     
@@ -273,6 +284,7 @@ Token lexer_read_hexadecimal(Lexer *lexer) {
  */
 Token lexer_read_binary(Lexer *lexer) {
     Token token;
+    lexer_init_token(&token);
     char buffer[64];
     int i = 0;
     
@@ -331,6 +343,7 @@ Token lexer_read_binary(Lexer *lexer) {
  */
 Token lexer_read_identifier(Lexer* lexer) {
     Token token;
+    lexer_init_token(&token);
     char identifier[64];
     char error_msg[100];
     int index = 0;
@@ -367,6 +380,7 @@ Token lexer_read_identifier(Lexer* lexer) {
  */
 Token lexer_read_string(Lexer* lexer) {
     Token token;
+    lexer_init_token(&token);
     char string_value[256];
     char error_msg[100];
     int index = 0;
@@ -417,10 +431,9 @@ Token lexer_read_string(Lexer* lexer) {
             return token;
         }
     }
-    
     // Termina a string
     string_value[index] = '\0';
-    
+
     // Verifica se encontrou a aspas final
     if (lexer->current_char == delimiter) {
         lexer_advance(lexer);  // Pula a aspas final
@@ -429,13 +442,12 @@ Token lexer_read_string(Lexer* lexer) {
     } else {
         // Erro: string não fechada
         token.type = TOKEN_ERROR;
-        sprintf(error_msg, get_error_unfinished_string(), delimiter);
-        strcpy(token.text, error_msg);
+        sprintf(token.text, "String não terminada: caractere '%c' esperado", delimiter);
     }
     
     return token;
-}
 
+}
 
 int is_function(const char* text) {
     // LISTA DE FUNÇÕES RUDIS
@@ -504,11 +516,13 @@ int is_function(const char* text) {
 Token lexer_get_next_token(Lexer* lexer) {
     char error_msg[100];
     Token token;
+    lexer_init_token(&token);
     
     while (lexer->current_char != '\0') {
-        if (isspace(lexer->current_char)) {
-            lexer_skip_whitespace(lexer);
-            continue;
+        if (isspace(lexer->current_char) && 
+            lexer->current_char != '\n') {
+                lexer_skip_whitespace(lexer);
+                continue;
         }
 
         // COMENTÁRIOS
@@ -539,6 +553,10 @@ Token lexer_get_next_token(Lexer* lexer) {
         // NÚMEROS
         if (isdigit(lexer->current_char)) {
             if (lexer->current_char == '0') {
+                // SOLUÇÃO PARA O BUG DE DIVISÃO POR ZERO NO REPL
+                if(lexer_peek_next(lexer) == 0){
+                    return lexer_read_number(lexer);
+                }
                 if (lexer_peek_in(lexer, "xX")) {
                     lexer_advance(lexer);
                     lexer_advance(lexer);
@@ -548,7 +566,7 @@ Token lexer_get_next_token(Lexer* lexer) {
                     lexer_advance(lexer);
                     lexer_advance(lexer);
                     return lexer_read_binary(lexer);
-                }
+                }             
             }
             return lexer_read_number(lexer);
         }
@@ -591,6 +609,11 @@ Token lexer_get_next_token(Lexer* lexer) {
                 token.type = TOKEN_SEMICOLON;
                 lexer_advance(lexer);
                 return token;
+
+            case '\n':  
+                token.type = TOKEN_NEWLINE;
+                lexer_advance(lexer);
+                return token;
                 
             case '=':
                 token.type = TOKEN_ASSIGN;
@@ -599,8 +622,9 @@ Token lexer_get_next_token(Lexer* lexer) {
                 
             default:
                 sprintf(error_msg, get_error_unknown_char(), lexer->current_char);
+                token.type = TOKEN_ERROR;
                 strcpy(token.text, error_msg);
-                return create_error_token(error_msg);
+                return token;             
         }
     }
     
@@ -610,6 +634,7 @@ Token lexer_get_next_token(Lexer* lexer) {
 
 Token create_error_token(const char* message) {
     Token token;
+    lexer_init_token(&token);
     token.type = TOKEN_ERROR;
     strcpy(token.text, message);
     return token;
@@ -617,9 +642,9 @@ Token create_error_token(const char* message) {
 
 void lexer_print_token(Token token) {
     const char* type_names[] = {
-        "NUMBER", "IDENTIFIER", "OPERATOR", "FUNCTION", 
-        "LPAREN", "RPAREN", "COMMA", "ASSIGN", 
-        "SEMICOLON", "COMMENT", "EOF", "ERROR", "STRING"
+        "UNKNOWN", "NUMBER", "IDENTIFIER", "OPERATOR", "FUNCTION", 
+        "LPAREN", "RPAREN", "COMMA", "ASSIGN","SEMICOLON",
+        "NEWLINE", "COMMENT", "EOF", "ERROR", "STRING"
     };
     
     printf("[%s] ", type_names[token.type]);
@@ -671,10 +696,13 @@ void lexer_print_token(Token token) {
             
         case TOKEN_COMMENT:
             printf("comment: '%s'", token.text);
-            break;
+            break;    
             
         case TOKEN_EOF:
             printf("END OF FILE");
+            break;
+        case TOKEN_UNKNOWN:
+            printf("TOKEN UNKNOWN");
             break;
     }
     

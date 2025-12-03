@@ -323,6 +323,7 @@ void print_general_help() {
         printf("  set lang pt|en          - Muda o idioma\n");
         printf("  clear                   - Limpa a tela\n");
         printf("  vars                    - Lista variáveis definidas\n");
+        printf("  reset                   - Remove todas as variáveis\n");
     } else {
         printf("  help                    - Shows this general help\n");
         printf("  help <function>         - Specific help for a function\n");
@@ -331,6 +332,7 @@ void print_general_help() {
         printf("  set lang pt|en          - Changes language\n");
         printf("  clear                   - Clears screen\n");
         printf("  vars                    - Lists defined variables\n");
+        printf("  reset                   - Removes all variables\n");
     }
     
     printf("\n" BOLD "%s\n" RESET, get_help_categories_title());

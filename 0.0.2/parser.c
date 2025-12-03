@@ -2,9 +2,9 @@
 #include "lang.h"
 #include "a89alloc.h"
 
-/*
- * FUNÇÃO AUXILIAR PARA LIBERAR ARGUMENTOS DE FUNÇÃO
- */
+// ==================================================================
+// FUNÇÃO AUXILIAR PARA LIBERAR ARGUMENTOS DE FUNÇÃO
+// ==================================================================
 void free_function_args(ASTNode** args, int arg_count) {
     if (args == NULL) return;
     
@@ -14,10 +14,9 @@ void free_function_args(ASTNode** args, int arg_count) {
     a89free(args);
 }
 
-/*
- * MENSAGENS DE ERRO INTERNACIONALIZADAS
- */
-
+// ==================================================================
+// MENSAGENS DE ERRO INTERNACIONALIZADAS
+// ==================================================================
 const char* get_error_unexpected_token() {
     return (current_lang == LANG_PT) 
         ? "Token inesperado" 
@@ -66,9 +65,54 @@ const char* get_error_syntax() {
         : "Syntax error";
 }
 
-/*
- * FUNÇÃO PARA SALVAR ESTADO DO PARSER
- */
+// ===========================================
+// FUNÇÕES PARA TIPOS DE DADOS 
+// ===========================================
+Value create_number_value(double num) {
+    Value val;
+    val.type = VAL_NUMBER;
+    val.number = num;
+    val.string[0] = '\0';  // String vazia
+    return val;
+}
+
+Value create_string_value(const char* str) {
+    Value val;
+    val.type = VAL_STRING;
+    val.number = 0.0;      // Número zerado
+    strncpy(val.string, str, sizeof(val.string) - 1);
+    val.string[sizeof(val.string) - 1] = '\0';
+    return val;
+}
+
+Value create_null_value(void){
+    Value val;
+    val.type = VAL_NULL;
+    val.number = 0.0;
+    val.string[0] = '\0';
+    return val;
+}
+
+void print_value(Value val, int decimal_places) {
+    switch (val.type) {
+        case VAL_NUMBER:
+            printf("%.*f", decimal_places, val.number);
+            break;
+        case VAL_STRING:
+            printf("%s", val.string);
+            break;
+        case VAL_NULL:
+            printf("null");
+            break;
+        default:
+            printf("unknown");
+            break;
+    }
+}
+
+// ==================================================================
+// FUNÇÕES DO PARSER
+// ==================================================================
 void parser_save_state(Parser* parser, Parser* saved_state) {
     // Salva o lexer completo
     saved_state->lexer->input = parser->lexer->input;
@@ -84,9 +128,6 @@ void parser_save_state(Parser* parser, Parser* saved_state) {
     strcpy(saved_state->error_message, parser->error_message);
 }
 
-/*
- * FUNÇÃO PARA RESTAURAR ESTADO DO PARSER
- */
 void parser_restore_state(Parser* parser, Parser* saved_state) {
     // Restaura o lexer
     parser->lexer->input = saved_state->lexer->input;
@@ -102,9 +143,6 @@ void parser_restore_state(Parser* parser, Parser* saved_state) {
     strcpy(parser->error_message, saved_state->error_message);
 }
 
-/*
- * INICIALIZACAO DO PARSER
- */
 void parser_init(Parser* parser, Lexer* lexer) {
     parser->lexer = lexer;
     parser->current_token = lexer_get_next_token(lexer);
@@ -112,32 +150,23 @@ void parser_init(Parser* parser, Lexer* lexer) {
     strcpy(parser->error_message, "");
 }
 
-/*
- * AVANCO DO PARSER
- */
 void parser_advance(Parser* parser) {
     parser->current_token = lexer_get_next_token(parser->lexer);
 }
 
-/*
- * VERIFICACAO DE TIPO DE TOKEN
- */
 int parser_expect(Parser* parser, RTokenType expected_type) {
     return parser->current_token.type == expected_type;
 }
 
-/*
- * DEFINICAO DE ERRO DO PARSER
- */
 void parser_set_error(Parser* parser, const char* message) {
     parser->has_error = 1;
     strncpy(parser->error_message, message, sizeof(parser->error_message) - 1);
     parser->error_message[sizeof(parser->error_message) - 1] = '\0';
 }
 
-/*
- * VALIDACAO DE ARGUMENTOS DE FUNÇÃO
- */
+// ==================================================================
+// VALIDACAO DE ARGUMENTOS DE FUNÇÃO
+// ==================================================================
 int validate_function_args(Parser* parser, const char* function_name, int arg_count) {
     char error_msg[100];
     
@@ -259,9 +288,9 @@ int validate_function_args(Parser* parser, const char* function_name, int arg_co
 }
 
 
-/*
- * CRIACAO DE NOS DA AST
- */
+// ==================================================================
+// CRIACAO DE NOS DA AST
+// ==================================================================
 ASTNode* create_number_node(double value) {
     ASTNode* node = A89ALLOC(sizeof(ASTNode));
     if (!node) {
@@ -269,10 +298,20 @@ ASTNode* create_number_node(double value) {
         exit(EXIT_FAILURE);
     }
     node->type = NODE_NUMBER;
-    node->value = value;
+
+    node->value = create_number_value(value);
+    node->text[0] = '\0';
+    node->operator = '\0';  
+    node->function[0] = '\0';
+
     node->left = node->right = node->operand = NULL;
+
     node->args = NULL;
     node->arg_count = 0;
+
+    node->statements = NULL;
+    node->stmt_count = 0;
+
     return node;
 }
 
@@ -283,11 +322,21 @@ ASTNode* create_variable_node(const char* variable) {
         exit(EXIT_FAILURE);
     }
     node->type = NODE_VARIABLE;
-    strncpy(node->variable, variable, sizeof(node->variable) - 1);
-    node->variable[sizeof(node->variable) - 1] = '\0';
+
+    node->value = create_null_value();
+    strncpy(node->text, variable, sizeof(node->text) - 1);
+    node->text[sizeof(node->text) - 1] = '\0';
+    node->operator = '\0';  
+    node->function[0] = '\0';
+
     node->left = node->right = node->operand = NULL;
+
     node->args = NULL;
     node->arg_count = 0;
+
+    node->statements = NULL;
+    node->stmt_count = 0;
+
     return node;
 }
 
@@ -298,12 +347,22 @@ ASTNode* create_binary_op_node(char operator, ASTNode* left, ASTNode* right) {
         exit(EXIT_FAILURE);
     }
     node->type = NODE_BINARY_OP;
+
+    node->value = create_null_value();
+    node->text[0] = '\0';
     node->operator = operator;
+    node->function[0] = '\0';
+
     node->left = left;
     node->right = right;
     node->operand = NULL;
+
     node->args = NULL;
     node->arg_count = 0;
+
+    node->statements = NULL;
+    node->stmt_count = 0;
+
     return node;
 }
 
@@ -314,11 +373,21 @@ ASTNode* create_unary_op_node(char operator, ASTNode* operand) {
         exit(EXIT_FAILURE);
     }
     node->type = NODE_UNARY_OP;
+
+    node->value = create_null_value();
+    node->text[0] = '\0';
     node->operator = operator;
-    node->operand = operand;
+    node->function[0] = '\0';
+
     node->left = node->right = NULL;
+    node->operand = operand;
+
     node->args = NULL;
     node->arg_count = 0;
+
+    node->statements = NULL;
+    node->stmt_count = 0;
+
     return node;
 }
 
@@ -329,35 +398,115 @@ ASTNode* create_function_node(const char* function, ASTNode** args, int arg_coun
         exit(EXIT_FAILURE);
     }
     node->type = NODE_FUNCTION;
+
+    node->value = create_null_value();
+    node->text[0] = '\0';
+    node->operator = '\0';    
     strncpy(node->function, function, sizeof(node->function) - 1);
     node->function[sizeof(node->function) - 1] = '\0';
+    
+    node->left = node->right = node->operand = NULL;
+
     node->args = args;
     node->arg_count = arg_count;
-    node->left = node->right = node->operand = NULL;
+
+    node->statements = NULL;
+    node->stmt_count = 0;
+
     return node;
 }
 
-ASTNode* create_assignment_node(const char* variable, ASTNode* value) {
+ASTNode* create_assignment_node(const char* variable, ASTNode* expr_value) {
     ASTNode* node = A89ALLOC(sizeof(ASTNode));
     if (!node) {
         printf("Erro ao alocar memória para assignment_node: %s\n", variable);
         exit(EXIT_FAILURE);
     }
     node->type = NODE_ASSIGNMENT;
-    strncpy(node->variable, variable, sizeof(node->variable) - 1);
-    node->variable[sizeof(node->variable) - 1] = '\0';
-    node->right = value;
+
+    node->value = create_null_value();
+    strncpy(node->text, variable, sizeof(node->text) - 1);
+    node->text[sizeof(node->text) - 1] = '\0';
+    node->operator = '\0';  
+    node->function[0] = '\0';
+
+    node->right = expr_value;
     node->left = node->operand = NULL;
+
     node->args = NULL;
     node->arg_count = 0;
+
+    node->statements = NULL;
+    node->stmt_count = 0;
+
     return node;
 }
 
-/*
- * LIBERACAO DE memória DA AST
- */
+ASTNode* create_string_node(const char* str_value) {
+    ASTNode* node = A89ALLOC(sizeof(ASTNode));
+    if (!node) {
+        printf("Erro ao alocar memória para string_node: %s\n", str_value);
+        exit(EXIT_FAILURE);
+    }
+    node->type = NODE_STRING;
+
+    node->value = create_string_value(str_value);
+    node->text[0] = '\0';  
+    node->operator = '\0';  
+    node->function[0] = '\0';
+
+    node->left = node->right = node->operand = NULL;
+
+    node->args = NULL;
+    node->arg_count = 0;
+
+    node->statements = NULL;
+    node->stmt_count = 0;
+
+    return node;
+}
+
+ASTNode* create_sequence_node(ASTNode** statements, int stmt_count) {
+    ASTNode* node = A89ALLOC(sizeof(ASTNode));
+    if (!node) {
+        printf("Erro ao alocar memória para sequence_node\n");
+        exit(EXIT_FAILURE);
+    }
+    node->type = NODE_SEQUENCE;
+
+    node->value = create_null_value();
+    node->text[0] = '\0';
+    node->operator = '\0';  
+    node->function[0] = '\0';
+
+    node->left = NULL;
+    node->right = NULL;
+    node->operand = NULL;    
+
+    node->args = NULL;
+    node->arg_count = 0;
+
+    node->statements = statements;
+    node->stmt_count = stmt_count;
+    
+    return node;
+}
+
 void free_ast(ASTNode* node) {
     if (node == NULL) return;
+
+    if (node->type == NODE_SEQUENCE) {
+        // Liberar todos os statements
+        if (node->statements != NULL) {
+            for (int i = 0; i < node->stmt_count; i++) {
+                free_ast(node->statements[i]);
+            }
+            a89free(node->statements);
+        }
+        // Depois liberar o próprio nó
+        a89free(node);
+        return;  // IMPORTANTE: retornar aqui para não processar duas vezes
+    }
     
     free_ast(node->left);
     free_ast(node->right);
@@ -373,9 +522,153 @@ void free_ast(ASTNode* node) {
     a89free(node);
 }
 
-/*
- * expression := assignment | arithmetic_expr
- */
+/********************************************************************
+FUNCOES DE PARSING 
+
+GRAMATICA v0.0.2
+program          := statement_list
+statement_list   := statement ((';' | NEWLINE) statement)*
+statement        := expression
+expression       := assignment | arithmetic_expr
+assignment       := IDENTIFIER '=' expression
+arithmetic_expr  := term (('+' | '-') term)*
+term             := factor (('*' | '/' | '%') factor)*
+factor           := power ('!')?
+power            := atom ('^' power)?
+atom             := NUMBER | STRING | IDENTIFIER | function_call | '(' expression ')' | '-' atom
+function_call    := FUNCTION '(' argument_list ')'
+argument_list    := expression (',' expression)*
+********************************************************************/
+
+// SERA IMPLEMENTADA QUANDO NECESSRIO
+// program := statement_list
+// ASTNode* parse_program(Parser* parser) {
+//     return parse_statement_list(parser);
+// }
+
+
+//===================================================================
+// statement_list   := statement ((';' | NEWLINE) statement)*
+//===================================================================
+ASTNode* parse_statement_list(Parser* parser) {
+    // Alocar array dinâmico para os statements
+    ASTNode** statements = NULL;
+    int capacity = 0;
+    int count = 0;
+    
+    // Parse o primeiro statement
+    ASTNode* first_stmt = parse_statement(parser);
+    if (!first_stmt) {
+        // Erro no parsing do primeiro statement
+        return NULL;
+    }
+    
+    // Se houver erro no parser, retornar NULL
+    if (parser->has_error) {
+        free_ast(first_stmt);
+        return NULL;
+    }
+    
+    // Alocar array inicial (tamanho 4)
+    capacity = 4;
+    statements = (ASTNode**)A89ALLOC(sizeof(ASTNode*) * capacity);
+    if (!statements) {
+        free_ast(first_stmt);
+        parser_set_error(parser, "Falha de alocação de memória para statements");
+        return NULL;
+    }
+    
+    // Adicionar primeiro statement
+    statements[count++] = first_stmt;
+    
+    // Continuar enquanto houver mais statements separados por ';' ou NEWLINE
+    while (1) {
+        Token current = parser->current_token;
+        
+        // Verificar se há separador de statements
+        if (current.type == TOKEN_SEMICOLON || current.type == TOKEN_NEWLINE) {
+            parser_advance(parser);  // Consumir ';' ou NEWLINE
+            
+            // Se encontramos EOF após separador, terminar
+            if (parser->current_token.type == TOKEN_EOF) {
+                break;
+            }
+            
+            // Parse próximo statement
+            ASTNode* next_stmt = parse_statement(parser);
+            if (!next_stmt) {
+                // Pode ser fim normal (statement vazio após ';')
+                if (parser->has_error) {
+                    // Erro real - liberar tudo
+                    for (int i = 0; i < count; i++) {
+                        free_ast(statements[i]);
+                    }
+                    a89free(statements);
+                    return NULL;
+                }
+                // Statement vazio, continuar
+                continue;
+            }
+            
+            // Expandir array se necessário
+            if (count >= capacity) {
+                capacity *= 2;
+                ASTNode** new_statements = (ASTNode**)A89ALLOC(sizeof(ASTNode*) * capacity);
+                if (!new_statements) {
+                    // Liberar tudo em caso de erro de alocação
+                    for (int i = 0; i < count; i++) {
+                        free_ast(statements[i]);
+                    }
+                    free_ast(next_stmt);
+                    a89free(statements);
+                    parser_set_error(parser, "Falha de alocação de memória para new_statements.");
+                    return NULL;
+                }
+                
+                // Copiar statements antigos
+                for (int i = 0; i < count; i++) {
+                    new_statements[i] = statements[i];
+                }
+                a89free(statements);
+                statements = new_statements;
+            }
+            
+            // Adicionar novo statement
+            statements[count++] = next_stmt;
+        } else {
+            // Não há mais statements
+            break;
+        }
+    }
+    
+    // Casos especiais:
+    if (count == 0) {
+        // Nenhum statement (programa vazio)
+        a89free(statements);
+        return create_sequence_node(NULL, 0);
+    }
+    
+    if (count == 1) {
+        // Apenas um statement - retornar diretamente sem criar sequence node
+        ASTNode* single_stmt = statements[0];
+        a89free(statements);  // Liberar array, mas manter o statement
+        return single_stmt;
+    }
+    
+    // Múltiplos statements - criar nó de sequência
+    return create_sequence_node(statements, count);
+}
+
+//===================================================================
+// statement        := expression
+//===================================================================
+ASTNode* parse_statement(Parser* parser) {
+    return parse_expression(parser);
+}
+
+//===================================================================
+// expression := assignment | arithmetic_expr
+//===================================================================
 ASTNode* parse_expression(Parser* parser) {
     // Salva estado atual para possivel rollback
     Parser saved_state;
@@ -405,9 +698,9 @@ ASTNode* parse_expression(Parser* parser) {
     return parse_arithmetic_expr(parser);
 }
 
-/*
- * arithmetic_expr := term (('+' | '-') term)*
- */
+//===================================================================
+// arithmetic_expr := term (('+' | '-') term)*
+//===================================================================
 ASTNode* parse_arithmetic_expr(Parser* parser) {
     ASTNode* node = parse_term(parser);
     if (parser->has_error) return NULL;
@@ -428,9 +721,9 @@ ASTNode* parse_arithmetic_expr(Parser* parser) {
     return node;
 }
 
-/*
- * term := factor (('*' | '/' | '%') factor)*
- */
+//===================================================================
+// term := factor (('*' | '/' | '%') factor)*
+//===================================================================
 ASTNode* parse_term(Parser* parser) {
     ASTNode* node = parse_factor(parser);
     if (parser->has_error) return NULL;
@@ -452,9 +745,9 @@ ASTNode* parse_term(Parser* parser) {
     return node;
 }
 
-/*
- * factor := power ('!')?
- */
+//===================================================================
+// factor := power ('!')?
+//===================================================================
 ASTNode* parse_factor(Parser* parser) {
     ASTNode* node = parse_power(parser);
     if (parser->has_error) return NULL;
@@ -469,9 +762,9 @@ ASTNode* parse_factor(Parser* parser) {
     return node;
 }
 
-/*
- * power := atom ('^' power)?
- */
+//===================================================================
+// power := atom ('^' power)?
+//===================================================================
 ASTNode* parse_power(Parser* parser) {
     ASTNode* node = parse_atom(parser);
     if (parser->has_error) return NULL;
@@ -491,9 +784,9 @@ ASTNode* parse_power(Parser* parser) {
     return node;
 }
 
-/*
- * atom := NUMBER | IDENTIFIER | function_call | '(' expression ')' | '-' atom
- */
+//===================================================================
+// atom := NUMBER | STRING | IDENTIFIER | function_call | '(' expression ')' | '-' atom
+//===================================================================
 ASTNode* parse_atom(Parser* parser) {
     Token token = parser->current_token;
 
@@ -501,7 +794,11 @@ ASTNode* parse_atom(Parser* parser) {
         case TOKEN_NUMBER:
             parser_advance(parser);
             return create_number_node(token.value);
-            
+
+        case TOKEN_STRING:   
+            parser_advance(parser);
+            return create_string_node(token.text);
+                    
         case TOKEN_IDENTIFIER:
             parser_advance(parser);
             return create_variable_node(token.text);
@@ -543,10 +840,10 @@ ASTNode* parse_atom(Parser* parser) {
     return NULL;
 }
 
-/*
- * function_call := FUNCTION '(' argument_list ')'
- * argument_list := expression (',' expression)*
- */
+//===================================================================
+// function_call := FUNCTION '(' argument_list ')'
+// argument_list := expression (',' expression)*
+//===================================================================
 ASTNode* parse_function_call(Parser* parser, const char* function_name) {
     parser_advance(parser);
     
@@ -598,9 +895,9 @@ ASTNode* parse_function_call(Parser* parser, const char* function_name) {
     return create_function_node(function_name, args, arg_count);
 }
 
-/*
- * Função PRINCIPAL DE PARSING
- */
+//===================================================================
+// Função PRINCIPAL DE PARSING
+//===================================================================
 ASTNode* parse(Lexer* lexer) {
     Parser parser;
     parser_init(&parser, lexer);
@@ -609,7 +906,7 @@ ASTNode* parse(Lexer* lexer) {
         return NULL;
     }
     
-    ASTNode* result = parse_expression(&parser);
+    ASTNode* result = parse_statement_list(&parser);
     
     if (parser.has_error) {
         if (result != NULL) {
@@ -630,39 +927,45 @@ ASTNode* parse(Lexer* lexer) {
     return result;
 }
 
-/*
- * IMPRESSAO DA AST (PARA DEBUG)
- */
-void print_ast(ASTNode* node, int indent) {
+void print_ast(ASTNode* node, int indent, int decimal_places) {
     if (node == NULL) return;
     
     for (int i = 0; i < indent; i++) printf("    ");
     
     switch (node->type) {
+        case NODE_SEQUENCE:
+            printf("SEQUENCE (%d statements):\n", node->stmt_count);
+            for (int i = 0; i < node->stmt_count; i++) {
+                print_ast(node->statements[i], indent + 1, decimal_places);
+            }
+            break;
         case NODE_NUMBER:
-            printf("NUMBER: %.2f\n", node->value);
+            printf("NUMBER: %.*f\n", decimal_places, node->value.number);
+            break;
+        case NODE_STRING:
+            printf("STRING: %s\n", node->value.string);
             break;
         case NODE_VARIABLE:
-            printf("VARIABLE: %s\n", node->variable);
+            printf("VARIABLE: %s\n", node->text);
             break;
         case NODE_BINARY_OP:
             printf("BINARY_OP: %c\n", node->operator);
-            print_ast(node->left, indent + 1);
-            print_ast(node->right, indent + 1);
+            print_ast(node->left, indent + 1, decimal_places);
+            print_ast(node->right, indent + 1, decimal_places);
             break;
         case NODE_UNARY_OP:
             printf("UNARY_OP: %c\n", node->operator);
-            print_ast(node->operand, indent + 1);
+            print_ast(node->operand, indent + 1, decimal_places);
             break;
         case NODE_FUNCTION:
             printf("FUNCTION: %s\n", node->function);
             for (int i = 0; i < node->arg_count; i++) {
-                print_ast(node->args[i], indent + 1);
+                print_ast(node->args[i], indent + 1, decimal_places);
             }
             break;
         case NODE_ASSIGNMENT:
-            printf("ASSIGNMENT: %s =\n", node->variable);
-            print_ast(node->right, indent + 1);
+            printf("ASSIGNMENT: %s =\n", node->text);
+            print_ast(node->right, indent + 1, decimal_places);
             break;
     }
 }
