@@ -4,7 +4,7 @@
 
 **Projeto didático de uma linguagem de programação simples e funcional. Escrito em C.**  
 
-![Version](https://img.shields.io/badge/version-0.0.1-blue)
+![Version](https://img.shields.io/badge/version-0.0.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-orange)
 
