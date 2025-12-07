@@ -4,7 +4,7 @@
 
 **Projeto didático de uma linguagem de programação simples e funcional. Escrito em C.**  
 
-![Version](https://img.shields.io/badge/version-0.0.2-blue)
+![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-orange)
 
@@ -17,26 +17,26 @@ O **Rudis** é uma linguagem de programação interpretada escrita em C, projeta
 - **Acessibilidade** - Documentação em português e inglês
 - **Evolução Orgânica** - Começa como calculadora, vira linguagem completa
 
-## ✨ Versão atual - 0.0.2
+## ✨ Versão atual - 0.1.0
 
 ---
 
-# Rudis - versão 0.0.2
+# Rudis - versão 0.1.0
 
 ## METADADOS DO PROJETO
 - **Nome**: Rudis
-- **Versão**: 0.0.2 (Sistema de Tipos + Múltiplas Instruções + Controle de Precisão + Internacionalização Completa)
+- **Versão**: 0.1.0 (Sistema Avançado de Output + Linha de Comando Completa + Cores ANSI)
 - **Filosofia**: Simplicidade, Acessibilidade, Flexibilidade
 - **Paradigma**: Interpretada, Dinâmica, Multipropósito
 - **Implementação**: C (interpretador)
 - **Repositório**: https://github.com/arataca89/rudis
-- **Data de Release**: 03/12/2025
+- **Data de Release**: 07/12/2025
 
 ---
 
-## DECISÕES DE DESIGN DA VERSÃO 0.0.1 (RESUMO)
+## RESUMO DAS VERSÕES ANTERIORES
 
-### CARACTERÍSTICAS ESTABELECIDAS:
+### VERSÃO 0.0.1 (BASE)
 - Sistema de tipos: único tipo numérico `double`
 - Identificadores: `[a-zA-Z_][a-zA-Z0-9_]*`
 - Comentários multi-estilo: `#`, `//`, `/* */`
@@ -45,403 +45,407 @@ O **Rudis** é uma linguagem de programação interpretada escrita em C, projeta
 - Sistema de atribuição encadeada
 - 35+ funções built-in (matemáticas, estatísticas, financeiras)
 - Sistema de numeração: decimal, hexadecimal (0x), binário (0b)
-- Internacionalização: PT/EN
-- REPL interativo com histórico e ajuda
+- REPL interativo com histórico e ajuda básica
+
+### VERSÃO 0.0.2 (SISTEMA DE TIPOS + INTERNACIONALIZAÇÃO)
+- ✅ **Sistema de tipos `Value`**: `VAL_NUMBER`, `VAL_STRING`, `VAL_NULL`
+- ✅ **Múltiplas instruções**: Suporte a `;` como separador
+- ✅ **Internacionalização completa**: PT/EN em todo o sistema
+- ✅ **Controle de precisão**: Função `setdec(n)` (0-15 casas)
+- ✅ **Comando `reset`**: Limpeza completa de variáveis
+- ✅ **Correção crítica**: Bug `5/0` (divisão por zero vs. erro de hexa)
 
 ---
 
-## OBJETIVOS DE DESIGN DA VERSÃO 0.0.2
+## DESIGN DA VERSÃO 0.1.0
 
-### 1. SISTEMA DE TIPOS `Value` (NOVO)
+### 1. OPERADOR `+` PARA CONCATENAÇÃO DE STRINGS
 **Status**: ✅ IMPLEMENTADO COMPLETAMENTE
 
 **Decisão de Design**:
-- Unificação de todos os valores em uma única estrutura `Value`
-- Suporte a três tipos primitivos: `VAL_NUMBER`, `VAL_STRING`, `VAL_NULL`
-- Preparado para expansão futura (booleanos, arrays, etc.)
-- Verificação de tipo em tempo de execução para segurança
+- Extensão do operador `+` para suportar strings
+- Comportamento polimórfico: números → soma, strings → concatenação
+- Conversão automática número→string quando necessário
+- Outros operadores matemáticos mantêm restrição a números
+
+**Comportamento**:
+```python
+# 1. String + String → Concatenação
+rudis> "Hello" + "World"           # "HelloWorld"
+rudis> "Hello" + " " + "World"     # "Hello World"
+
+# 2. String + Número → Conversão e concatenação  
+rudis> "Idade: " + 25              # "Idade: 25"
+rudis> "Preço: R$ " + 99.99        # "Preço: R$ 99.99"
+
+# 3. Número + String → Conversão e concatenação
+rudis> 10 + " apples"              # "10 apples"
+rudis> 3.14 + " é pi"              # "3.14 é pi"
+
+# 4. Número + Número → Soma (comportamento original mantido)
+rudis> 10 + 5                      # 15
+rudis> 3.14 + 2.86                 # 6.0
+
+# 5. Outros operadores com strings → ERRO
+rudis> "10" - "5"                  # ERRO: "Operações aritméticas requerem números"
+rudis> "a" * "b"                   # ERRO: "Operações aritméticas requerem números"
+```
 
 **Implementação Técnica**:
 ```c
-typedef enum {
-    VAL_NUMBER,
-    VAL_STRING,
-    VAL_NULL
-} ValueType;
+// value.c - Sistema de Conversão de Tipos
+Value number_to_string_value(double number, int decimal_places);
+Value value_to_string_value(Value value, int decimal_places);
 
-typedef struct Value {
-    ValueType type;
-    union {
-        double number;
-        char string[256];
-    };
-} Value;
+// evaluator.c - Sistema de Concatenação
+EvaluatorResult string_concatenate(EvaluatorResult* left, 
+                                   EvaluatorResult* right,
+                                   int decimal_places);
+
+// Formatação inteligente: inteiros não mostram ".000000"
+if (number == (int)number) {
+    snprintf(buffer, STR_SIZE, "%d", (int)number);  // 25 → "25"
+} else {
+    snprintf(buffer, STR_SIZE, "%.*f", decimal_places, number);
+}
 ```
 
-**Funções Auxiliares**:
-```c
-Value create_number_value(double num);
-Value create_string_value(const char* str);
-Value create_null_value(void);
-void print_value(Value val, int decimal_places);
-```
-
-**Impacto no Sistema**:
-- ✅ Parser: Nós da AST agora usam `Value` em vez de `double`
-- ✅ Evaluator: Todas as operações verificam tipos
-- ✅ Variáveis: Armazenam `Value` em vez de `double`
-- ✅ REPL: Exibição unificada com `print_value()`
-
-### 2. SUPORTE A MÚLTIPLAS INSTRUÇÕES POR LINHA
-**Status**: ✅ IMPLEMENTADO
-
-**Decisão de Design**: 
-- O caractere `;` funciona como separador de instruções no REPL
-- Cada instrução é processada sequencialmente
-- Variáveis persistem entre instruções na mesma linha
-- Mantém compatibilidade com instrução única
-
-**Exemplo**:
-```python
-rudis> a=3; b=5; c=a+b; c
-8.0
-```
-
-### 3. INTERNACIONALIZAÇÃO COMPLETA DO SISTEMA
-**Status**: ✅ IMPLEMENTADO
-
-**Arquivos Internacionalizados**:
-- **`help.c`** - Sistema de ajuda completo em PT/EN
-- **`main.c`** - Mensagens do REPL internacionalizadas
-- **`evaluator.c`** - Mensagens de erro de avaliação
-- **`lexer.c`** - ✅ Já internacionalizado
-- **`parser.c`** - ✅ Já internacionalizado
-
-**Mensagens Internacionalizadas**:
-- Erros de sintaxe e avaliação
-- Sistema de ajuda completo
-- Mensagens do REPL e comandos
-- Listagem de variáveis
-- Confirmações de comando
-
-**Comportamento**:
-```bash
-# Português (padrão)
-rudis> set lang pt
-rudis> 3++                 # "Erro de sintaxe na expressão"
-rudis> help sqrt           # Ajuda em português
-
-# Inglês
-rudis> set lang en  
-rudis> 3++                 # "Syntax error in expression"
-rudis> help sqrt           # Help in English
-```
-
-### 4. TIPO STRING (HABILITADO PELO SISTEMA `Value`)
+### 2. SISTEMA COMPLETO DE CORES ANSI (34 FUNÇÕES)
 **Status**: ✅ IMPLEMENTADO COMPLETAMENTE
 
 **Decisão de Design**:
-- Strings são delimitadas por aspas duplas (`"`)
-- Suporte a sequências de escape: `\n` (nova linha), `\\` (barra invertida), `\"` (aspas)
-- Tamanho máximo: 256 caracteres por string
-- Representação na AST: `NODE_STRING` com campo `value` do tipo `Value`
+- 34 funções específicas em vez de função genérica `color()`
+- Reset automático após cada aplicação
+- Funções não podem ser usadas como nomes de variáveis
+- Documentação completa integrada ao sistema de ajuda
 
-**Exemplo**:
-```python
-# Atribuição e uso de strings
-rudis> nome = "João Silva"
-"João Silva"
-rudis> mensagem = "Texto\ncom\nmultilinhas"
-"Texto
-com
-multilinhas"
-rudis> caminho = "C:\\Windows\\System32"
-"C:\Windows\System32"
+**Funções Implementadas**:
+```c
+// CORES DO TEXTO (16)
+black(), red(), green(), yellow(), blue(), magenta(), cyan(), white()
+bright_black(), bright_red(), bright_green(), bright_yellow()
+bright_blue(), bright_magenta(), bright_cyan(), bright_white()
+
+// CORES DE FUNDO (16)
+bg_black(), bg_red(), bg_green(), bg_yellow(), bg_blue(), bg_magenta()
+bg_cyan(), bg_white(), bg_bright_black(), bg_bright_red()
+bg_bright_green(), bg_bright_yellow(), bg_bright_blue()
+bg_bright_magenta(), bg_bright_cyan(), bg_bright_white()
+
+// ESTILOS DE TEXTO (8)
+bold(), dim(), italic(), underline(), blink(), inverse(), hidden(), strikethrough()
 ```
-
-### 5. CONTROLE DE CASAS DECIMAIS
-**Status**: ✅ IMPLEMENTADO
-
-**Função**: `setdec(n)`
-- **Categoria**: Funções de Configuração (nova categoria)
-- **Parâmetros**: `n` - número de casas decimais (0-15)
-- **Padrão**: 6 casas decimais
-- **Comportamento**: Modifica o `EvaluatorState`
-
-**Implementação Técnica**:
-- Uso do especificador `%.*f` para formatação dinâmica
-- Validação de range (0-15 casas)
-- Mensagens de erro internacionalizadas
-- Função `print_value()` atualizada para receber `decimal_places`
-
-**Exemplos**:
-```python
-# Padrão (6 casas)
-rudis> 10/3
-3.333333
-
-# Controle de precisão
-rudis> setdec(2)
-rudis> 10/3
-3.33
-
-# Para valores monetários
-rudis> setdec(0)
-rudis> 10/3
-3
-
-# Precisão científica
-rudis> setdec(8)
-rudis> 1/7
-0.14285714
-```
-
-### 6. NOVO COMANDO: `reset`
-**Status**: ✅ IMPLEMENTADO
-
-**Descrição**: Remove todas as variáveis do estado do evaluator
-**Uso**: `reset`
 
 **Comportamento**:
-```bash
-rudis> x = 10; y = 20
-rudis> vars
-=== VARIÁVEIS DEFINIDAS ===
-  x = 10.000000
-  y = 20.000000
-Total: 2 variáveis
+```python
+# Uso básico
+rudis> red("Erro!")                     # Texto vermelho
+rudis> green("Sucesso!")                # Texto verde
+rudis> bold("Importante")               # Texto em negrito
 
-rudis> reset
-Estado resetado. Todas as variáveis removidas.
+# Combinações aninhadas
+rudis> bold(red("ERRO CRÍTICO!"))       # Texto vermelho em negrito
+rudis> underline(blue("Link"))          # Texto azul sublinhado
+rudis> bg_red(white(" ALERTA "))        # Fundo vermelho com texto branco
 
-rudis> vars
-=== VARIÁVEIS DEFINIDAS ===
-Nenhuma variável definida.
+# Composição com operador +
+rudis> red("Erro: ") + yellow("Aviso")  # "Erro: " vermelho + "Aviso" amarelo
+
+# Funções como palavras reservadas
+rudis> red("texto")                     # ✓ Funciona como função
+rudis> red = 5                          # ✗ Erro: Esperado '(' após nome da função
+rudis> x = red("teste")                 # ✓ Pode atribuir resultado a variável
 ```
 
-### 7. NOVA CATEGORIA: FUNÇÕES DE CONFIGURAÇÃO
-**Status**: ✅ IMPLEMENTADO
+**Implementação Técnica**:
+```c
+// value.c - Função genérica para evitar repetição
+static Value apply_ansi(Value text, const char* ansi_code) {
+    if (text.type != VAL_STRING) {
+        text = value_to_string_value(text, -1);
+    }
+    Value result;
+    result.type = VAL_STRING;
+    snprintf(result.string, STR_SIZE, "%s%s%s", ansi_code, text.string, RESET);
+    return result;
+}
 
-**Organização**:
-- Separa funções stateful das funções stateless
-- Categoria dedicada no `execute_function()`
-- Preparada para expansão futura
+// Cada função específica chama apply_ansi()
+Value red(Value text) { return apply_ansi(text, RED); }
+Value bold(Value text) { return apply_ansi(text, BOLD); }
+// ... 32 outras funções
+```
 
-**Funções Atuais**:
-- `setdec(n)` - Controla casas decimais da saída
+### 3. FUNÇÕES DE FORMATAÇÃO DE TEXTO
+**Status**: ✅ IMPLEMENTADO COMPLETAMENTE
+
+**Decisão de Design**:
+- Funções específicas para alinhamento: `left()`, `center()`, `right()`
+- Função `repeat()` para criação de separadores
+- Assinatura consistente: `Value func(Value arg1, Value arg2)`
+- Conversão automática de tipos
+
+**Funções Implementadas**:
+```python
+# left(largura, texto) - Alinhamento à esquerda
+rudis> left(30, "Texto")           # "Texto                         "
+rudis> print("[" + left(10,"teste") + "]")  # "[teste     ]"
+
+# center(largura, texto) - Alinhamento ao centro  
+rudis> center(30, "Texto")         # "            Texto            "
+rudis> print("[" + center(10,"teste") + "]")  # "[  teste   ]"
+
+# right(largura, texto) - Alinhamento à direita
+rudis> right(30, "Texto")          # "                         Texto"
+rudis> print("[" + right(10,"teste") + "]")   # "[     teste]"
+
+# repeat(caractere, quantidade) - Repetição
+rudis> repeat("-", 40)             # "----------------------------------------"
+rudis> repeat("*", 20)             # "********************"
+rudis> green(repeat("=", 70))      # Linha verde de 70 caracteres
+```
+
+**Implementação Técnica**:
+```c
+// Função auxiliar para alinhamento
+static Value apply_alignment(Value text, int width, const char* align_type) {
+    // Implementação usando printf com width dinâmico
+    if (strcmp(align_type, "left") == 0) {
+        snprintf(result.string, STR_SIZE, "%-*s", width, temp);
+    } else if (strcmp(align_type, "right") == 0) {
+        snprintf(result.string, STR_SIZE, "%*s", width, temp);
+    }
+    // ... implementação de center
+}
+
+// Funções públicas com verificação de tipos
+Value left(Value largura, Value texto) {
+    if (largura.type != VAL_NUMBER) {
+        // Retorna erro: primeiro argumento deve ser número
+    }
+    int width = (int)largura.number;
+    return apply_alignment(texto, width, "left");
+}
+```
+
+### 4. SISTEMA DE LINHA DE COMANDO COMPLETO
+**Status**: ✅ IMPLEMENTADO COMPLETAMENTE
+
+**Decisão de Design**:
+- Interface padrão seguindo convenções de outras linguagens
+- Modo REPL como padrão (sem argumentos)
+- Execução de arquivos simples: `rudis arquivo.rudis`
+- Opção `-e` para one-liners (inspirado em Perl/Python)
+
+**Sintaxe de Linha de Comando**:
+```bash
+rudis                     # Modo REPL interativo (padrão)
+rudis script.rudis        # Executa arquivo (caso mais comum)
+rudis -e "código"         # Executa código inline (one-liner)
+rudis -h, --help          # Mostra ajuda da linha de comando
+rudis -v, --version       # Mostra versão
+rudis --lang pt|en        # Define idioma (mantido da v0.0.2)
+```
+
+**Implementação Técnica**:
+```c
+// Estrutura para argumentos
+typedef struct {
+    int show_help;
+    int show_version;
+    int interactive_mode;
+    int execute_string;
+    char* filename;
+    char* code_string;
+    int has_error;
+    char error_message[256];
+} CommandLineArgs;
+
+// Parser de argumentos
+CommandLineArgs parse_arguments(int argc, char *argv[]) {
+    // Lógica para detectar -h, -v, -e, arquivos, etc.
+}
+
+// Execução de arquivo
+int execute_file(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    // Lê linha por linha, chama process_input()
+}
+
+// Execução de string (-e)
+void execute_string(const char* code) {
+    process_input(code);  // Reusa mesma engine do REPL
+}
+```
+
+**Exemplos de Uso**:
+```bash
+# 1. Cálculos rápidos no terminal
+rudis -e "pv(0.05, 10, 100)"
+rudis -e "mean(1,2,3,4,5)"
+rudis -e "print(bold(red('ERRO!')))"
+
+# 2. Executar scripts
+rudis relatorio_financeiro.rudis
+
+# 3. Pipeline em shell scripts
+echo "1 2 3 4 5" | xargs rudis -e "mean($@)"
+
+# 4. Modo REPL interativo
+rudis
+```
+
+### 5. SISTEMA DE AJUDA EXPANDIDO (PÁGINA 5)
+**Status**: ✅ IMPLEMENTADO COMPLETAMENTE
+
+**Decisão de Design**:
+- Página 5 dedicada a cores e estilos
+- Documentação completa para todas as 34 funções de cores
+- Exemplos práticos de uso e combinações
+- Integração na ajuda geral
+
+**Acesso**:
+```bash
+rudis> help 5                    # Página completa de cores
+rudis> help red                  # Ajuda específica da função red
+rudis> help bold                 # Ajuda específica da função bold
+```
+
+**Conteúdo da Página 5**:
+- **16 cores de texto** (normais e brilhantes)
+- **16 cores de fundo** (prefixo `bg_`)
+- **8 estilos de texto** (negrito, sublinhado, itálico, etc.)
+- **Exemplos práticos** de combinações
+- **Casos de uso** realistas (alertas, tabelas, destaques)
 
 ---
 
-## EXEMPLOS DA VERSÃO 0.0.2:
+## EXEMPLOS COMPLETOS DA VERSÃO 0.1.0:
 
-### SISTEMA DE TIPOS `Value`:
+### EXEMPLO 1: RELATÓRIO FORMATADO COM CORES
 ```python
-# Números
-rudis> x = 42
-42.000000
+# Configura precisão para dinheiro
+setdec(2)
 
-# Strings  
-rudis> nome = "Alice"
-"Alice"
+# Dados
+receita = 50000.75
+despesa = 32500.30
+lucro = receita - despesa
 
-# Mix de tipos
-rudis> idade = 30; nome = "Carlos"
-rudis> vars
-=== VARIÁVEIS DEFINIDAS ===
-  idade = 30.000000
-  nome = "Carlos"
-Total: 2 variáveis
+# Relatório formatado
+print(bold(green(repeat("=", 60))))
+print(center(60, bold("RELATÓRIO FINANCEIRO")))
+print(bold(green(repeat("=", 60))))
 
-# Operações com verificação de tipo
-rudis> 5 + "texto"
-Erro: Operações aritméticas requerem números
+print("Receita:  " + right(20, green(string(receita))))
+print("Despesa:  " + right(20, red(string(despesa))))
+print(repeat("-", 40))
+print("Lucro:    " + right(20, bold(cyan(string(lucro)))))
+
+print(bold(green(repeat("=", 60))))
 ```
 
-### MÚLTIPLAS INSTRUÇÕES:
+### EXEMPLO 2: TABELA COM BORDAS DECORATIVAS
 ```python
-rudis> nome = "João"; idade = 25; salario = 2500.50
-rudis> salario
-2500.500000
+# Cabeçalho decorativo
+print(bold(cyan(repeat("═", 50))))
+print(center(50, bold(blue("TABELA DE PRODUTOS"))))
+print(bold(cyan(repeat("═", 50))))
 
-rudis> a=3; b=5; c=a*b; c
-15.0
-```
+# Cabeçalho da tabela
+print(left(20, "PRODUTO") + center(10, "QTD") + right(15, "PREÇO"))
 
-### STRINGS COMPLETAS:
-```python
-# Atribuição e uso de strings
-rudis> nome = "Maria Silva"
-"Maria Silva"
-rudis> boas_vindas = "Bem-vindo ao Rudis v0.0.2"
-"Bem-vindo ao Rudis v0.0.2"
-rudis> texto_multilinha = "Linha 1\nLinha 2\nLinha 3"
-"Linha 1
-Linha 2
-Linha 3"
-```
+# Separador
+print(repeat("-", 45))
 
-### INTERNACIONALIZAÇÃO:
-```python
-# Português
-rudis> set lang pt
-rudis> 3++                 # "Erro de sintaxe na expressão"
-rudis> x/0                 # "Divisão por zero"
-rudis> sqrt()              # "sqrt requer 1 argumento"
+# Dados
+print(left(20, "Caneta") + center(10, "100") + right(15, "2.50"))
+print(left(20, "Caderno") + center(10, "50") + right(15, "15.99"))
+print(left(20, "Borracha") + center(10, "200") + right(15, "1.25"))
 
-# Inglês  
-rudis> set lang en
-rudis> 3++                 # "Syntax error in expression"
-rudis> x/0                 # "Division by zero" 
-rudis> sqrt()              # "sqrt requires 1 argument"
-```
-
-### CONTROLE DE PRECISÃO:
-```python
-# Aplicações práticas
-rudis> setdec(2)           # Para dinheiro
-rudis> 123.4567
-123.46
-
-rudis> setdec(0)           # Para contagens
-rudis> 10/3
-3
-
-rudis> setdec(8)           # Para ciência
-rudis> 1/7
-0.14285714
-
-# Mix de tipos com precisão
-rudis> setdec(3)
-rudis> pi = 3.141592653589793
-3.142
-rudis> nome = "π"
-"π"
-```
-
-### SISTEMA DE AJUDA INTERNACIONALIZADO:
-```python
-rudis> set lang en
-rudis> help +              # Operator: + (Addition)...
-rudis> help sqrt           # Function: sqrt (Square Root)...
-
-rudis> set lang pt  
-rudis> help +              # Operador: + (Adição)...
-rudis> help sqrt           # Função: sqrt (Raiz Quadrada)...
+# Rodapé
+print(bold(cyan(repeat("═", 50))))
 ```
 
 ---
 
 ## OBSERVAÇÕES TÉCNICAS
 
-### 1. ARQUITETURA DO SISTEMA DE TIPOS `Value`
-- **Design**: Struct com enum de tipo + union para dados
-- **Vantagens**: 
-  - Extensibilidade fácil para novos tipos
-  - Verificação de tipo em tempo de execução
-  - Código mais seguro e manutenível
-- **Desafios**: 
-  - Conversão de código existente de `double` para `Value`
-  - Verificações de tipo adicionais em operações
-- **Resultado**: Base sólida para versões futuras
+### 1. ARQUITETURA DO SISTEMA DE CORES
+- **Abordagem**: 34 funções específicas vs. função genérica `color()`
+- **Vantagens**: Mais intuitivo para o usuário, auto-documentado
+- **Implementação**: Função genérica `apply_ansi()` evita repetição de código
+- **Performance**: Código ANSI direto, não interpretação de strings
 
-### 2. CORREÇÃO DE BUG CRÍTICO: `5/0`
-**Problema**: Expressão `5/0` gerava erro de hexadecimal em vez de "Divisão por zero"
-**Causa**: Lexer interpretava `0` seguido de `\n` como início de número hexadecimal
-**Solução**: Adição de verificação explícita para `\0` após `0`:
+### 2. SISTEMA DE TIPOS E CONVERSÃO
+- **Polimorfismo do operador `+`**: Detecta tipos em tempo de execução
+- **Conversão inteligente**: Inteiros não mostram ".000000"
+- **Proteção**: Buffer overflow prevenido com `STR_SIZE` fixo (256 chars)
+- **Extensibilidade**: Base pronta para mais operadores polimórficos
 
-```c
-// CORREÇÃO NO lexer.c
-if (lexer->current_char == '0') {
-    if(lexer_peek_next(lexer) == 0) {  // Se próximo char é \0
-        return lexer_read_number(lexer);  // Trata como número, não hexa
-    }
-    // ... resto do código
-}
-```
+### 3. LINHA DE COMANDO PROFISSIONAL
+- **Padrões seguidos**: `-e` (Perl/Python), `-h`/`-v` (convenção POSIX)
+- **Simplicidade**: `rudis arquivo` mais intuitivo que `rudis -f arquivo`
+- **Utilidade**: `-e` permite integração com shell scripts
+- **Compatibilidade**: Mantém `--lang` da versão anterior
 
-**Aprendizado**: Sempre testar casos de borda com `\0` e `\n`
+### 4. SISTEMA DE AJUDA UNIFICADO
+- **Organização**: 5 páginas temáticas
+- **Cobertura**: Todas as 59 funções documentadas (35 antigas + 24 novas)
+- **Internacionalização**: PT/EN para toda a documentação
+- **Exemplos**: Casos práticos de uso real
 
-### 3. MIGRAÇÃO DE `double` PARA `Value`
-**Escopo da Mudança**:
-- ✅ Parser: Todos os nós da AST agora usam `Value`
-- ✅ Evaluator: Operações verificam tipos antes de executar
-- ✅ Funções: Recebem `Value*` em vez de `double*`
-- ✅ REPL: Exibição unificada via `print_value()`
+### 5. EXPERIÊNCIA DO USUÁRIO
+- **Consistência**: Mesmo comportamento em REPL e arquivos
+- **Feedback**: Mensagens de erro claras em operações de tipo
+- **Flexibilidade**: Combinação livre de cores, alinhamento, repetição
+- **Produtividade**: `-e` para cálculos rápidos, arquivos para projetos
 
-**Exemplo de Refatoração**:
-```c
-// ANTES: double
-double result = left + right;
-
-// DEPOIS: Value
-if (left.type != VAL_NUMBER || right.type != VAL_NUMBER) {
-    return create_error_result("Operações aritméticas requerem números");
-}
-Value result = create_number_value(left.number + right.number);
-```
-
-### 4. ESPECIFICADOR `%.*f`
-- **Recurso C**: Permite número dinâmico de casas decimais
-- **Sintaxe**: `printf("%.*f", casas, valor)`
-- **Vantagem**: Elimina necessidade de formatação manual de strings
-- **Aplicação**: Usado em todas as saídas numéricas do REPL
-- **Atualização**: Função `print_value()` agora recebe `decimal_places` como parâmetro
-
-### 5. COMANDO `reset`
-- **Utilidade**: Limpeza de estado durante desenvolvimento/debug
-- **Implementação**: Simples chamada a `evaluator_free()` + `evaluator_init()`
-- **I18N**: Mensagens bilíngues usando sistema centralizado
-
-### 6. CATEGORIA DE CONFIGURAÇÃO
-- **Inovação**: Primeira categoria de funções stateful no Rudis
-- **Organização**: Separa claramente funções de cálculo vs. configuração
-- **Expansão**: Base para futuras funções de controle do sistema
-
-### 7. EXPERIÊNCIA DO USUÁRIO
-- **Consistência**: Comportamento idêntico em PT/EN
-- **Controle**: Precisão ajustável conforme necessidade
-- **Profissionalismo**: Recursos de calculadora avançada
-- **Flexibilidade**: Transição suave entre diferentes usos
-- **Feedback**: Mensagens de erro claras e informativas
+### 6. PREPARAÇÃO PARA O FUTURO
+- **Base para formatação avançada**: Cores e alinhamento preparam terreno para `print` melhorado
+- **Estrutura para execução de arquivos**: Base para futuros `include`, `import`
+- **Sistema de tipos extensível**: Pronto para booleanos, arrays, etc.
+- **Arquitetura de execução**: REPL e arquivos usam mesma engine
 
 ---
 
 ## ✅ **ESTADO ATUAL DO PROJETO**
 
-**Progresso da v0.0.2**: 100% completo
-- ✅ Sistema de tipos `Value` - 100%
-- ✅ Múltiplas instruções - 100%
-- ✅ Internacionalização completa - 100%  
-- ✅ Controle de precisão (`setdec`) - 100%
-- ✅ Tipo string - 100%
-- ✅ Comando `reset` - 100%
-- ✅ Correção de bug `5/0` - 100%
+**Progresso da v0.1.0**: 100% completo
+- ✅ **Operador `+` para strings** - Concatenação e conversão automática
+- ✅ **34 funções de cores ANSI** - Cores, fundos, estilos
+- ✅ **3 funções de alinhamento** - `left()`, `center()`, `right()`
+- ✅ **Função `repeat()`** - Criação de separadores
+- ✅ **Sistema de linha de comando** - REPL, arquivos, one-liners
+- ✅ **Sistema de ajuda expandido** - Página 5 para cores
+- ✅ **Arquitetura unificada** - Mesma engine para REPL e arquivos
 
-**Compatibilidade com v0.0.1**: 100% mantida
+**Compatibilidade com v0.0.2**: 100% mantida
 
-**Arquitetura Futura**: Base sólida para tipos adicionais (boolean, array, etc.)
+**Base para versões futuras**: Sistema robusto para formatação avançada
 
 ---
 
 ## 🎯 VERSÕES FUTURAS (PREVIEW):
 
-### **v0.1.0** 
-  • Sistema completo de print com formatação
-  
-  • Cores ANSI, tabulação, campos
-  
-  • Parsing especial para sintaxe COR:CAMPO:valor
+### **v0.2.0** (PRÓXIMA)
+- Função `input()` para entrada de dados
+ 
+### **v0.3.0**
+- **Estruturas de controle** - `if`, `else`, `while`, `for`
+- **Funções definidas pelo usuário** - `function nome() ... end`
+- **Escopo de variáveis** - Locais vs. globais
 
-### **v0.2.0** 
-  • Operações com strings (concatenação, comparação)
-  
-  • Funções string básicas
+### **v0.4.0** 
+- **Operações com strings** - Comparação, extração, substituição
+- **Expressões regulares básicas** - Busca e substituição
+- **Funções string avançadas** - `split()`, `join()`, `trim()`
 
 ---
 
-**Última atualização**: 03/12/2025  
+**Última atualização**: 07/12/2025  
 **Status da versão**: ✅ PRONTA PARA RELEASE  
-**Nota Técnica**: O sistema `Value` estabelece a base para todos os tipos futuros do Rudis
+**Nota Técnica**: O Rudis agora é uma ferramenta completa com interface profissional, preparada para uso em scripts reais e integração em pipelines de shell. A base estabelecida permite expansão natural para formatação avançada na próxima versão.
 
 ---
 
