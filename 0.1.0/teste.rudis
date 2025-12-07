@@ -1,0 +1,17 @@
+print("+" + repeat("-", 68) + "+")
+print("|" + center(68, "MENU PRINCIPAL") + "|")
+print("+" + repeat("-", 68) + "+")
+
+print()
+
+# Dados
+receita = 50000.75
+despesa = 32500.30
+lucro = receita - despesa
+
+# Relatório formatado
+print(bold("=== RELATÓRIO FINANCEIRO ==="))
+print("Receita: " + green(right(15,receita)))
+print("Despesa: " + red(right(15,despesa)))  
+print("Lucro: " + cyan(right(15, lucro)))
+repeat("=",40)

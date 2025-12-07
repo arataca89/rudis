@@ -1,0 +1,18 @@
+# Cabeçalho decorativo
+print(bold(cyan(repeat("=", 50))))
+print(center(50, bold(blue("TABELA DE PRODUTOS"))))
+print(bold(cyan(repeat("=", 50))))
+
+# Cabeçalho da tabela
+print(left(20, "PRODUTO") + center(10, "QTD") + right(15, "PREÇO"))
+
+# Separador
+print(repeat("-", 45))
+
+# Dados
+print(left(20, "Caneta") + center(10, "100") + right(15, "2.50"))
+print(left(20, "Caderno") + center(10, "50") + right(15, "15.99"))
+print(left(20, "Borracha") + center(10, "200") + right(15, "1.25"))
+
+# Rodapé
+print(bold(cyan(repeat("=", 50))))
