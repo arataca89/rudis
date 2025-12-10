@@ -1,14 +1,13 @@
 # Linguagem Rudis - referência das funções C usadas
 
-
 ```
 /*
  * REFERÊNCIA DE FUNÇÕES DE BIBLIOTECA C
- * Rudis Language - Versão 0.1.0
+ * Rudis Language - Versão 0.2.0
  * 
  * Lista completa das funções de biblioteca padrão C utilizadas
  * na implementação do interpretador Rudis
- * Última atualização: 07/12/2025
+ * Última atualização: 10/12/2025
  */
 
 #include <stdio.h>
@@ -39,6 +38,7 @@
 - [`system()`](#system) - Executar comando do sistema
 - [`qsort()`](#qsort) - Ordenar array
 - [`atoi()`](#atoi) - Converter string para inteiro
+- [`strtod()`](#strtod) - Converter string para double
 
 ### 3. Biblioteca `<string.h>` - Manipulação de Strings
 - [`strcpy()`](#strcpy) - Copiar string
@@ -430,6 +430,32 @@ int num = atoi(argument);     // Usado no comando help
 - Usado no parser de argumentos do `help`
 - Não detecta erros (preferir `strtol` para código robusto)
 - Retorna 0 se conversão falhar
+
+### <a name="strtod"></a>`strtod()`
+```c
+double strtod(const char *nptr, char **endptr);
+```
+**Descrição**: Converte string para double (ponto flutuante).
+
+**Parâmetros**:
+- `nptr`: String a converter
+- `endptr`: Ponteiro para armazenar posição após conversão
+
+**Retorno**: Valor double convertido.
+
+**Exemplo**:
+```c
+char *endptr;
+double num = strtod("123.45", &endptr);
+double hex = strtod("0xFF", &endptr);     // Suporta hexadecimal
+double sci = strtod("1.23e4", &endptr);   // Suporta notação científica
+```
+
+**Observações**:
+- Usado em `input_number()` para conversão de entrada
+- Suporta múltiplos formatos: decimal, hexadecimal (0x), notação científica
+- Detecta overflow/underflow via variável global `errno`
+- `endptr` indica onde parou a conversão (útil para validação)
 
 ## 3. BIBLIOTECA `<string.h>` - MANIPULAÇÃO DE STRINGS
 
@@ -953,7 +979,7 @@ size_t elem_size = sizeof(double);     // elem_size = 8 (normalmente)
 ## 9. ESTRUTURAS E TIPOS PERSONALIZADOS
 
 ### <a name="file"></a>`FILE`
-**Descrição**: Tipo opaco para streams de arquivo.
+**Descrição**: Tipo opaque para streams de arquivo.
 
 **Observações**:
 - Manipulado apenas por funções da biblioteca padrão
@@ -978,7 +1004,7 @@ size_t elem_size = sizeof(double);     // elem_size = 8 (normalmente)
 - `sqrt`, `pow`, `log10`, `log`, `exp`, `sin`, `cos`, `tan`, `fabs`
 - `isinf`, `isnan`
 - `strcmp`, `strncmp`, `qsort`
-- `malloc`, `free`
+- `malloc`, `free`, `strtod` (NOVO)
 
 ### **`value.c`**:
 - `snprintf`, `sprintf`, `strncpy`, `strncat`, `strlen`, `memset`
@@ -1000,3 +1026,4 @@ size_t elem_size = sizeof(double);     // elem_size = 8 (normalmente)
 3. **Memória**: Gerenciamento manual com `malloc`/`free`, sem garbage collection
 4. **Performance**: Operações matemáticas delegadas à biblioteca C otimizada
 5. **Manutenção**: Documentação completa de todas dependências externas
+6. **NOVO NA 0.2.0**: Função `strtod()` adicionada para suporte a `input_number()`
